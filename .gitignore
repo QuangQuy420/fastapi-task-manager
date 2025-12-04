@@ -1,0 +1,79 @@
+# -----------------------------
+# Python
+# -----------------------------
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pyd
+*.so
+*.dylib
+
+# Ignore Python build
+build/
+dist/
+*.egg-info/
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# -----------------------------
+# FastAPI / SQLAlchemy
+# -----------------------------
+# SQLite (if used before PostgreSQL)
+*.db
+*.sqlite3
+
+# Alembic (optional migrations)
+alembic.ini
+alembic/
+versions/
+
+# -----------------------------
+# Environment & secrets
+# -----------------------------
+.env
+.env.*
+!.env.example   # keep template
+
+# -----------------------------
+# Editors & IDEs
+# -----------------------------
+# VS Code
+.vscode/
+.code-workspace
+
+# PyCharm / JetBrains
+.idea/
+
+# -----------------------------
+# OS-specific files
+# -----------------------------
+.DS_Store
+Thumbs.db
+
+# -----------------------------
+# Docker
+# -----------------------------
+# Local docker volumes
+docker-data/
+postgres_data/
+*.pid
+
+# -----------------------------
+# Logs
+# -----------------------------
+logs/
+*.log
+
+# -----------------------------
+# Cache
+# -----------------------------
+.cache/
+.pytest_cache/
+.mypy_cache/
+coverage/
+htmlcov/
