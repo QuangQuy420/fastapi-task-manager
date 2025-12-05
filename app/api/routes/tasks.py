@@ -2,7 +2,7 @@ from typing import List
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
-from app.core.db import SessionLocal
+from app.api.deps import get_db
 from app.schemas.task import TaskCreate, TaskUpdate, TaskOut
 from app.services.task_service import TaskService
 
@@ -11,15 +11,6 @@ router = APIRouter(
     prefix="/tasks",
     tags=["Tasks"],
 )
-
-
-# --- Dependency: DB Session ---
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
 
 
 # --- Dependency: TaskService ---
