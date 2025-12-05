@@ -4,3 +4,4 @@ from .task import Task
 from .sprint import Sprint
 from .project_member import ProjectMember
 from .task_history import TaskHistory
+from .project_history import ProjectHistory
