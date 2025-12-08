@@ -40,49 +40,35 @@ def create_project(
     return project
 
 
-# @router.get(
-#     "",
-#     response_model=List[ProjectRead],
-# )
-# def list_my_projects(
-#     current_user: User = Depends(get_current_user),
-#     project_service: ProjectService = Depends(get_project_service),
-# ):
-#     """
-#     List projects that the current user is a member of.
-#     """
-#     # You can either expose a method in ProjectService or
-#     # access the repository directly like this:
-#     projects = project_service.project_repo.list_for_user(current_user.id)
-#     return projects
+@router.get(
+    "",
+    response_model=List[ProjectRead],
+)
+def list_my_projects(
+    current_user: User = Depends(get_current_user),
+    project_service: ProjectService = Depends(get_project_service),
+):
+    """
+    List projects that the current user is a member of.
+    """
+    projects = project_service.get_user_projects(current_user.id)
+    return projects
 
 
-# @router.get(
-#     "/{project_id}",
-#     response_model=ProjectRead,
-# )
-# def get_project(
-#     project_id: int,
-#     current_user: User = Depends(get_current_user),
-#     project_service: ProjectService = Depends(get_project_service),
-# ):
-#     """
-#     Get a single project by ID (user must be a member).
-#     """
-#     # Service already does existence check.
-#     project = project_service.get_project(project_id)
-
-#     # Optional: enforce membership here (or move into service)
-#     member = project_service.member_repo.get(project_id, current_user.id)
-#     if not member:
-#         from fastapi import HTTPException
-
-#         raise HTTPException(
-#             status_code=status.HTTP_403_FORBIDDEN,
-#             detail="You are not a member of this project",
-#         )
-
-#     return project
+@router.get(
+    "/{project_id}",
+    response_model=ProjectRead,
+)
+def get_project(
+    project_id: int,
+    current_user: User = Depends(get_current_user),
+    project_service: ProjectService = Depends(get_project_service),
+):
+    """
+    Get a single project by ID (user must be a member).
+    """
+    project = project_service.get_project_detail(project_id, current_user.id)
+    return project
 
 
 @router.patch(

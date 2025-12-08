@@ -20,7 +20,7 @@ class ProjectRepository:
 
         return query.one_or_none()
 
-    def list_for_user(self, user_id: int) -> Iterable[Project]:
+    def get_user_projects(self, user_id: int) -> Iterable[Project]:
         return (
             self.db.query(Project)
             .join(ProjectMember, ProjectMember.project_id == Project.id)

@@ -24,6 +24,29 @@ class ProjectService:
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Not allowed to perfomm action",
             )
+        
+    def get_project_by_id(self, project_id: int, for_update: bool = False):
+        project = self.project_repo.get_project_by_id(project_id, for_update)
+        if not project or project.deleted_at is not None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Project not found or has been deleted",
+            )
+        return project
+        
+    def get_user_projects(self, user_id: int):
+        return self.project_repo.get_user_projects(user_id)
+    
+    def get_project_detail(self, project_id: int, user_id: int):
+        member = self.member_repo.get_member_project(project_id, user_id)
+        if not member:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Project not found or you are not a member of this project",
+            )
+
+        project = self.get_project_by_id(project_id)
+        return project
 
     def create_project(self, data: ProjectCreate, owner_id: int):
         try:
@@ -60,15 +83,6 @@ class ProjectService:
         except SQLAlchemyError:
             self.db.rollback()
             raise
-
-    def get_project_by_id(self, project_id: int, for_update: bool = False):
-        project = self.project_repo.get_project_by_id(project_id, for_update)
-        if not project or project.deleted_at is not None:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Project not found",
-            )
-        return project
 
     def update_project(self, project_id: int, data: ProjectUpdate, user_id: int):
         self._check_permissions(
