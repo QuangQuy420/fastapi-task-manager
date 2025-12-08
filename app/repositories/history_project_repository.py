@@ -1,9 +1,11 @@
+from fastapi.params import Depends
 from sqlalchemy.orm import Session
+from app.api.deps import get_db
 from app.models.project_history import ProjectHistory
 
 
 class ProjectHistoryRepository:
-    def __init__(self, db: Session):
+    def __init__(self, db: Session = Depends(get_db)):
         self.db = db
 
     def create_history(
