@@ -7,6 +7,7 @@ from sqlalchemy import (
 )
 
 from app.core.db import Base
+from app.core.enums import UserRole
 
 
 class ProjectMember(Base):
@@ -19,7 +20,7 @@ class ProjectMember(Base):
     user_id = Column(
         Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
     )
-    role = Column(String(20), nullable=False, default="member")  # owner/maintainer/member/viewer
+    role = Column(String(20), nullable=False, default=UserRole.OWNER.value)  # owner/maintainer/member/viewer
 
     __table_args__ = (
         UniqueConstraint("project_id", "user_id", name="uq_project_user"),

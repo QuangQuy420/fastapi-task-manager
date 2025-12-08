@@ -9,6 +9,7 @@ from sqlalchemy import (
 from sqlalchemy.orm import relationship
 
 from app.core.db import Base
+from app.core.enums import ProjectStatus
 
 
 class Project(Base):
@@ -17,7 +18,7 @@ class Project(Base):
     id = Column(Integer, primary_key=True)
     title = Column(String(255), nullable=False)
     description = Column(String, nullable=True)
-    status = Column(String(50), nullable=False, default="active")
+    status = Column(String(50), nullable=False, default=ProjectStatus.PLANNED.value)
     managed_by = Column(Integer, ForeignKey("users.id"), nullable=False)
 
     created_at = Column(DateTime, nullable=False, server_default=func.now())
