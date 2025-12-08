@@ -9,7 +9,7 @@ class ProjectMemberRepository:
     def __init__(self, db: Session):
         self.db = db
 
-    def get(self, project_id: int, user_id: int) -> ProjectMember | None:
+    def get_member_project(self, project_id: int, user_id: int) -> ProjectMember | None:
         return (
             self.db.query(ProjectMember)
             .filter(

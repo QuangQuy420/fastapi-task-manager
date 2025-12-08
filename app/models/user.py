@@ -1,5 +1,6 @@
 from sqlalchemy import Column, Integer, String, DateTime, func
 from app.core.db import Base
+from sqlalchemy.orm import relationship
 
 
 class User(Base):
@@ -14,3 +15,5 @@ class User(Base):
     updated_at = Column(
         DateTime, nullable=False, server_default=func.now(), onupdate=func.now()
     )
+
+    project_members = relationship("ProjectMember", back_populates="user")
