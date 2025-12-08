@@ -1,7 +1,9 @@
 from typing import Iterable
 
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
+from app.core.enums import ProjectStatus
 from app.models.project import Project
 from app.models.project_member import ProjectMember
 
@@ -10,8 +12,13 @@ class ProjectRepository:
     def __init__(self, db: Session):
         self.db = db
 
-    def get(self, project_id: int) -> Project | None:
-        return self.db.query(Project).filter(Project.id == project_id).first()
+    def get_project_by_id(self, project_id: int, for_update=False) -> Project | None:
+        query = self.db.query(Project).filter(Project.id == project_id)
+
+        if for_update:
+            query = query.with_for_update()
+
+        return query.one_or_none()
 
     def list_for_user(self, user_id: int) -> Iterable[Project]:
         return (
@@ -21,7 +28,7 @@ class ProjectRepository:
             .all()
         )
 
-    def create(self, *, title: str, description: str | None, managed_by: int) -> Project:
+    def create_project(self, *, title: str, description: str | None, managed_by: int) -> Project:
         project = Project(
             title=title,
             description=description,
@@ -31,13 +38,16 @@ class ProjectRepository:
         # no commit here - service layer should handle transactions
         return project
 
-    def update(self, project: Project, data: dict) -> Project:
+    def update_project(self, project: Project, data: dict) -> Project:
         for field, value in data.items():
             setattr(project, field, value)
 
         self.db.flush()
         return project
 
-    def delete(self, project: Project) -> None:
-        self.db.delete(project)
-        self.db.commit()
+    def delete_project(self, project: Project) -> None:
+        project.deleted_at = func.now()
+        project.status = ProjectStatus.ARCHIVED.value
+
+        self.db.flush()
+        return project

@@ -26,5 +26,9 @@ class Project(Base):
         DateTime, nullable=False, server_default=func.now(), onupdate=func.now()
     )
 
-    sprints = relationship("Sprint", back_populates="project", cascade="all, delete-orphan")
-    tasks = relationship("Task", back_populates="project", cascade="all, delete-orphan")
+    deleted_at = Column(DateTime, nullable=True, index=True)
+
+    sprints = relationship("Sprint", back_populates="project")
+    tasks = relationship("Task", back_populates="project")
+    history = relationship("ProjectHistory", back_populates="project")
+    project_members = relationship("ProjectMember", back_populates="project")

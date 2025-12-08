@@ -26,9 +26,11 @@ class ProjectStatus(str, Enum):
     ACTIVE = "active"
     COMPLETED = "completed"
     CANCELLED = "cancelled"
+    ARCHIVED = "archived"
 
 
 class ProjectHistoryAction(str, Enum):
     CREATE = "create"
     UPDATE = "update"
+    DELETE = "delete"
     ADJUST_MEMBER = "adjust_member"

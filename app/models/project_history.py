@@ -6,6 +6,7 @@ from sqlalchemy import (
     ForeignKey,
     func,
 )
+from sqlalchemy.orm import relationship
 
 from sqlalchemy.dialects.postgresql import JSONB
 from app.core.db import Base
@@ -15,7 +16,7 @@ class ProjectHistory(Base):
 
     id = Column(Integer, primary_key=True)
     project_id = Column(
-        Integer, ForeignKey("projects.id", ondelete="CASCADE"), nullable=False, index=True
+        Integer, ForeignKey("projects.id"), nullable=False, index=True
     )
     changed_by = Column(Integer, ForeignKey("users.id"), nullable=False)
     changed_at = Column(DateTime, nullable=False, server_default=func.now())
@@ -26,3 +27,5 @@ class ProjectHistory(Base):
     status = Column(String(50))
 
     details = Column(JSONB, nullable=True)
+
+    project = relationship("Project", back_populates="history")
