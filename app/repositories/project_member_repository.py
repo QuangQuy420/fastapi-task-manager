@@ -1,12 +1,14 @@
 from typing import Iterable
 
+from fastapi import Depends
 from sqlalchemy.orm import Session
 
+from app.api.deps import get_db
 from app.models.project_member import ProjectMember
 
 
 class ProjectMemberRepository:
-    def __init__(self, db: Session):
+    def __init__(self, db: Session = Depends(get_db)):
         self.db = db
 
     def get_member_project(self, project_id: int, user_id: int) -> ProjectMember | None:

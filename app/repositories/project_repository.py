@@ -1,18 +1,20 @@
-from typing import Iterable
+from typing import Iterable, Optional
 
+from fastapi import Depends
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
+from app.api.deps import get_db
 from app.core.enums import ProjectStatus
 from app.models.project import Project
 from app.models.project_member import ProjectMember
 
 
 class ProjectRepository:
-    def __init__(self, db: Session):
+    def __init__(self, db: Session = Depends(get_db)):
         self.db = db
 
-    def get_project_by_id(self, project_id: int, for_update=False) -> Project | None:
+    def get_project_by_id(self, project_id: int, for_update=False) -> Optional[Project]:
         query = self.db.query(Project).filter(Project.id == project_id)
 
         if for_update:
@@ -24,7 +26,10 @@ class ProjectRepository:
         return (
             self.db.query(Project)
             .join(ProjectMember, ProjectMember.project_id == Project.id)
-            .filter(ProjectMember.user_id == user_id)
+            .filter(
+                ProjectMember.user_id == user_id,
+                Project.deleted_at.is_(None)
+            )
             .all()
         )
 
@@ -35,7 +40,7 @@ class ProjectRepository:
             managed_by=managed_by,
         )
         self.db.add(project)
-        # no commit here - service layer should handle transactions
+        # Note: No commit here. The Service layer handles the "Unit of Work" (Commit).
         return project
 
     def update_project(self, project: Project, data: dict) -> Project:
@@ -50,4 +55,4 @@ class ProjectRepository:
         project.status = ProjectStatus.ARCHIVED.value
 
         self.db.flush()
-        return project
+        return None
