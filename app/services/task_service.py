@@ -1,87 +1,136 @@
+from fastapi import Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from fastapi import HTTPException, status
 
+from app.api.deps import get_db
+from app.core.enums import EntityEnum, HistoryAction, UserRole
+from app.core.helpers import format_date_to_string
+from app.repositories.project_member_repository import ProjectMemberRepository
+from app.repositories.project_repository import ProjectRepository
+from app.repositories.task_history_repository import TaskHistoryRepository
 from app.repositories.task_repository import TaskRepository
 from app.schemas.task import TaskCreate, TaskUpdate
-from app.models.task import Task
-from app.core.enums import TaskStatus
+from app.services.base_service import BaseService
 
 
-class TaskService:
-    """
-    Application service layer for Task-related business logic.
-    """
+class TaskService(BaseService[TaskRepository]):
+    def __init__(self, db: Session = Depends(get_db)):
+        task_repo = TaskRepository(db)
+        super().__init__(db, task_repo)
+        self.member_repo = ProjectMemberRepository(db)
+        self.task_history_repo = TaskHistoryRepository(db)
+        self.project_repo = ProjectRepository(db)
 
-    def __init__(self, db: Session):
-        self.repo = TaskRepository(db)
+    def _validate_assigned_user(self, project_id: int, assigned_to: int | None):
+        """Ensure assigned user is a project member."""
+        if assigned_to is None:
+            return
+        
+        is_member = self.member_repo.get_member_project(project_id, assigned_to)
+        if not is_member:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Cannot assign task to user who is not a project member",
+            )
 
+    def create_task(self, data: TaskCreate, user_id: int):
+        """Create a new task."""
+        self.member_repo.check_permissions(
+            project_id=data.project_id,
+            user_id=user_id,
+            required_roles=[UserRole.OWNER.value, UserRole.MAINTAINER.value, UserRole.MEMBER.value],
+        )
 
-    def _ensure_completed_flag(self, task_in: TaskUpdate | TaskCreate) -> dict:
-        """
-        Apply simple rule:
-        - If status == DONE → is_completed = True
-        - Otherwise, do not touch is_completed (let default or caller handle)
-        Returns a dict of updated data.
-        """
-        data = task_in.model_dump(exclude_unset=True)
-
-        status_value = data.get("status")
-        if status_value is not None:
-            if status_value == TaskStatus.DONE.value:
-                data["is_completed"] = True
-
-        return data
-
-    def _get_or_404(self, task_id: int) -> Task:
-        task = self.repo.get(task_id)
-        if not task:
+        project = self.project_repo.get_by_id(id=data.project_id)
+        if not project or getattr(project, "deleted_at", None) is not None:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail="Task not found",
+                detail="Project not found or has been deleted",
             )
-        return task
 
-    # ---------- Public API used by routes ----------
+        # Validate assigned_to is project member
+        if data.assigned_to:
+            self._validate_assigned_user(data.project_id, data.assigned_to)
 
-    def list_tasks(self) -> list[Task]:
-        """
-        Return all tasks.
-        Later you can add filters (status, priority, assigned_to, etc.)
-        """
-        return self.repo.list()
+        task_data = data.model_dump()
 
-    def get_task(self, task_id: int) -> Task:
-        """
-        Return a single task or raise 404.
-        """
-        return self._get_or_404(task_id)
+        task = self.repository.create(**task_data)
+        self.db.flush()
 
-    def create_task(self, task_in: TaskCreate) -> Task:
-        """
-        Create a new task.
-        Business rules:
-        - If status == DONE → force is_completed = True.
-        """
-        data = self._ensure_completed_flag(task_in)
+        self.task_history_repo.create(
+            task_id=task.id,
+            changed_by=user_id,
+            action=HistoryAction.CREATE.value,
+            details=None,
+        )
 
-        task_in = TaskCreate(**data)
-        return self.repo.create(task_in)
+        self.commit_or_rollback()
+        return self.refresh(task)
 
-    def update_task(self, task_id: int, task_in: TaskUpdate) -> Task:
-        """
-        Update an existing task.
-        Business rules:
-        - If status == DONE → force is_completed = True.
-        """
-        task = self._get_or_404(task_id)
-        data = self._ensure_completed_flag(task_in)
+    def update_task(self, task_id: int, data: TaskUpdate, user_id: int):
+        """Update an existing task."""
+        task = self.get_by_id_or_404(entity_id=task_id, for_update=True, entity_name=EntityEnum.TASK.value)
 
-        task_in = TaskUpdate(**data)
-        return self.repo.update(task, task_in)
+        # Check permissions
+        self.member_repo.check_permissions(
+            project_id=task.project_id,
+            user_id=user_id,
+            required_roles=[UserRole.OWNER.value, UserRole.MAINTAINER.value, UserRole.MEMBER.value],
+        )
 
-    def delete_task(self, task_id: int) -> None:
-        """
-        Delete a task by ID or raise 404 if it doesn't exist.
-        """
-        task = self._get_or_404(task_id)
-        self.repo.delete(task)
+        update_data = data.model_dump(exclude_unset=True)
+
+        # Validate if reassigning
+        if update_data.get("assigned_to") is not None:
+            self._validate_assigned_user(task.project_id, update_data["assigned_to"])
+
+        before = {
+            "title": task.title,
+            "description": task.description,
+            "status": task.status,
+            "priority": task.priority,
+            "assigned_to": task.assigned_to,
+            "due_date": format_date_to_string(task.due_date),
+        }
+
+        task = self.repository.update(task, update_data)
+
+        # Capture after state
+        after = {
+            "title": task.title,
+            "description": task.description,
+            "status": task.status,
+            "priority": task.priority,
+            "assigned_to": task.assigned_to,
+            "due_date": format_date_to_string(task.due_date),
+        }
+
+        self.task_history_repo.create(
+            task_id=task.id,
+            changed_by=user_id,
+            action=HistoryAction.UPDATE.value,
+            details={"before": before, "after": after}
+        )
+
+        self.commit_or_rollback()
+        return self.refresh(task)
+
+    def delete_task(self, task_id: int, user_id: int):
+        """Soft delete a task."""
+        task = self.get_by_id_or_404(entity_id=task_id, for_update=True, entity_name=EntityEnum.TASK.value)
+
+        # Check permissions
+        self.member_repo.check_permissions(
+            project_id=task.project_id,
+            user_id=user_id,
+            required_roles=[UserRole.OWNER.value, UserRole.MAINTAINER.value, UserRole.MEMBER.value],
+        )
+
+        self.task_history_repo.create(
+            task_id=task.id,
+            changed_by=user_id,
+            action=HistoryAction.DELETE.value,
+            details=None,
+        )
+
+        self.repository.delete_task(task)
+        self.commit_or_rollback()

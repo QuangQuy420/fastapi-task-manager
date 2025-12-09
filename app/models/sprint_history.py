@@ -11,16 +11,17 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.dialects.postgresql import JSONB
 from app.core.db import Base
 
-class ProjectHistory(Base):
-    __tablename__ = "project_history"
+class SprintHistory(Base):
+    __tablename__ = "sprint_history"
 
     id = Column(Integer, primary_key=True)
-    project_id = Column(
-        Integer, ForeignKey("projects.id"), nullable=False, index=True
+    sprint_id = Column(
+        Integer, ForeignKey("sprints.id"), nullable=False, index=True
     )
     changed_by = Column(Integer, ForeignKey("users.id"), nullable=False)
     changed_at = Column(DateTime, nullable=False, server_default=func.now())
     action = Column(String(20), nullable=False)
+
     details = Column(JSONB, nullable=True)
 
-    project = relationship("Project", back_populates="histories")
+    sprint = relationship("Sprint", back_populates="histories")
