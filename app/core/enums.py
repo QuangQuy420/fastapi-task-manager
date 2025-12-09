@@ -1,19 +1,33 @@
 from enum import Enum
 
 
+# Entity Types
+class EntityEnum(str, Enum):
+    Entity = "Entity"
+    TASK = "Task"
+    PROJECT = "Project"
+    SPRINT = "Sprint"
+
+
+# Task
 class TaskStatus(str, Enum):
+    NEW = "new"
     TODO = "todo"
     IN_PROGRESS = "in_progress"
+    REVIEW = "review"
+    IN_TESTING = "in_testing"
     DONE = "done"
+    ACHIEVED = "achieved"
 
 
 class TaskPriority(int, Enum):
-    HIGH = 1
-    MEDIUM = 2
-    LOW = 3
+    CRITICAL = 1
+    HIGH = 2
+    MEDIUM = 3
+    LOW = 4
 
 
-# Project
+# User Roles - for Project Members
 class UserRole(str, Enum):
     OWNER = "owner"
     MAINTAINER = "maintainer"
@@ -21,6 +35,7 @@ class UserRole(str, Enum):
     VIEWER = "viewer"
 
 
+# Project
 class ProjectStatus(str, Enum):
     PLANNED = "planned"
     ACTIVE = "active"
@@ -29,8 +44,19 @@ class ProjectStatus(str, Enum):
     ARCHIVED = "archived"
 
 
-class ProjectHistoryAction(str, Enum):
+# History Actions
+class HistoryAction(str, Enum):
     CREATE = "create"
     UPDATE = "update"
     DELETE = "delete"
     ADJUST_MEMBER = "adjust_member"
+
+
+# Sprint
+class SprintStatus(str, Enum):
+    NEW = "new"
+    PLANNED = "planned"
+    ACTIVE = "active"
+    COMPLETED = "completed"
+    CANCELLED = "cancelled"
+    ARCHIVED = "archived"

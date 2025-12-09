@@ -1,37 +1,36 @@
+from typing import Iterable
 from sqlalchemy.orm import Session
+
+from app.core.enums import TaskStatus
 from app.models.task import Task
-from app.models.task_history import TaskHistory
+from app.repositories.base_repository import BaseRepository
 
 
-class TaskRepository:
+class TaskRepository(BaseRepository[Task]):
     def __init__(self, db: Session):
-        self.db = db
+        super().__init__(Task, db)
 
-    def get(self, task_id: int) -> Task | None:
-        return self.db.query(Task).filter(Task.id == task_id).first()
-
-    def save(self, task: Task):
-        self.db.add(task)
-        self.db.commit()
-        self.db.refresh(task)
-        return task
-
-    def add_history(
-        self,
-        task: Task,
-        changed_by: int,
-        action: str,
-    ):
-        history = TaskHistory(
-            task_id=task.id,
-            changed_by=changed_by,
-            action=action,
-            title=task.title,
-            description=task.description,
-            status=task.status,
-            priority=task.priority,
-            assigned_to=task.assigned_to,
-            due_date=task.due_date,
-            is_completed=task.is_completed,
+    def get_project_tasks(self, project_id: int) -> Iterable[Task]:
+        return (
+            self.db.query(Task)
+            .filter(
+                Task.project_id == project_id,
+                Task.deleted_at.is_(None)
+            )
+            .order_by(Task.created_at.desc())
+            .all()
         )
-        self.db.add(history)
+
+    def get_sprint_tasks(self, sprint_id: int) -> Iterable[Task]:
+        return (
+            self.db.query(Task)
+            .filter(
+                Task.sprint_id == sprint_id,
+                Task.deleted_at.is_(None)
+            )
+            .all()
+        )
+
+    def delete_task(self, task: Task) -> None:
+        self.soft_delete(task)
+        task.status = TaskStatus.ACHIEVED.value

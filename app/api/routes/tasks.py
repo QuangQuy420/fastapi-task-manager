@@ -1,92 +1,52 @@
 from typing import List
 from fastapi import APIRouter, Depends, status
-from sqlalchemy.orm import Session
 
-from app.api.deps import get_db
-from app.schemas.task import TaskCreate, TaskUpdate, TaskOut
+from app.api.deps import get_current_user
+from app.models.user import User
+from app.schemas.task import TaskCreate, TaskUpdate, TaskRead
 from app.services.task_service import TaskService
 
-
-router = APIRouter(
-    prefix="/tasks",
-    tags=["Tasks"],
-)
-
-
-# --- Dependency: TaskService ---
-def get_task_service(db: Session = Depends(get_db)) -> TaskService:
-    return TaskService(db)
-
-
-# -----------------------------
-#       ROUTES (ASYNC)
-# -----------------------------
-
-@router.get("/", response_model=List[TaskOut])
-async def list_tasks(service: TaskService = Depends(get_task_service)):
-    """
-    Return all tasks.
-    """
-    return service.list_tasks()
+router = APIRouter(prefix="/tasks", tags=["tasks"])
 
 
 @router.post(
-    "/",
-    response_model=TaskOut,
+    "",
+    response_model=TaskRead,
     status_code=status.HTTP_201_CREATED,
 )
-async def create_task(
-    task_in: TaskCreate,
-    service: TaskService = Depends(get_task_service),
+def create_task(
+    data: TaskCreate,
+    current_user: User = Depends(get_current_user),
+    task_service: TaskService = Depends(),
 ):
-    """
-    Create a new task.
-    """
-    return service.create_task(task_in)
+    """Create a new task."""
+    return task_service.create_task(data=data, user_id=current_user.id)
 
 
-@router.get("/{task_id}", response_model=TaskOut)
-async def get_task(
+@router.patch(
+    "/{task_id}",
+    response_model=TaskRead,
+    status_code=status.HTTP_200_OK,
+)
+def update_task(
     task_id: int,
-    service: TaskService = Depends(get_task_service),
+    data: TaskUpdate,
+    current_user: User = Depends(get_current_user),
+    task_service: TaskService = Depends(),
 ):
-    """
-    Get a task by ID.
-    """
-    return service.get_task(task_id)
+    """Update a task."""
+    return task_service.update_task(task_id=task_id, data=data, user_id=current_user.id)
 
 
-@router.put("/{task_id}", response_model=TaskOut)
-async def update_task(
+@router.delete(
+    "/{task_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+def delete_task(
     task_id: int,
-    task_in: TaskUpdate,
-    service: TaskService = Depends(get_task_service),
+    current_user: User = Depends(get_current_user),
+    task_service: TaskService = Depends(),
 ):
-    """
-    Update a task completely.
-    """
-    return service.update_task(task_id, task_in)
-
-
-@router.patch("/{task_id}", response_model=TaskOut)
-async def partial_update_task(
-    task_id: int,
-    task_in: TaskUpdate,
-    service: TaskService = Depends(get_task_service),
-):
-    """
-    Partially update a task (PATCH).
-    """
-    return service.update_task(task_id, task_in)
-
-
-@router.delete("/{task_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_task(
-    task_id: int,
-    service: TaskService = Depends(get_task_service),
-):
-    """
-    Delete a task by ID.
-    """
-    service.delete_task(task_id)
+    """Delete a task."""
+    task_service.delete_task(task_id=task_id, user_id=current_user.id)
     return None

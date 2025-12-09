@@ -30,5 +30,5 @@ class Project(Base):
 
     sprints = relationship("Sprint", back_populates="project")
     tasks = relationship("Task", back_populates="project")
-    history = relationship("ProjectHistory", back_populates="project")
+    histories = relationship("ProjectHistory", back_populates="project")
     project_members = relationship("ProjectMember", back_populates="project")
