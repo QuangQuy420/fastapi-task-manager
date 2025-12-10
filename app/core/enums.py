@@ -60,3 +60,16 @@ class SprintStatus(str, Enum):
     COMPLETED = "completed"
     CANCELLED = "cancelled"
     ARCHIVED = "archived"
+
+
+# Sort - Filter - Pagination
+class SortOrder(str, Enum):
+    ASC = "asc"
+    DESC = "desc"
+
+
+class ProjectSortBy(str, Enum):
+    CREATED_AT = "created_at"
+    UPDATED_AT = "updated_at"
+    TITLE = "title"
+    STATUS = "status"

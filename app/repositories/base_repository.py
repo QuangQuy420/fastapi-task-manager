@@ -1,18 +1,14 @@
-from typing import Generic, TypeVar, Type, Optional, List
-from fastapi import Depends
-from sqlalchemy.orm import Session
-from sqlalchemy import func
+from typing import Generic, TypeVar, Type, Optional, List, Tuple
+from sqlalchemy.orm import Session, Query
+from sqlalchemy import func, or_, asc, desc
 
-from app.api.deps import get_db
 from app.core.db import Base
 
 ModelType = TypeVar("ModelType", bound=Base) # type: ignore
 
 
 class BaseRepository(Generic[ModelType]):
-    """
-    Base repository with common CRUD operations.
-    """
+    """Base repository with common CRUD operations."""
 
     def __init__(self, model: Type[ModelType], db: Session):
         self.model = model
@@ -25,9 +21,62 @@ class BaseRepository(Generic[ModelType]):
             query = query.with_for_update()
         return query.first()
 
-    def get_all(self, skip: int = 0, limit: int = 100) -> List[ModelType]:
-        """Get all records with pagination."""
-        return self.db.query(self.model).offset(skip).limit(limit).all()
+    def get_paginated(
+        self, 
+        query: Query, 
+        page: int = 1, 
+        page_size: int = 20
+    ) -> Tuple[List[ModelType], int]:
+        """Execute paginated query and return items + total count."""
+        total = query.count()
+        skip = (page - 1) * page_size
+        items = query.offset(skip).limit(page_size).all()
+        return items, total
+
+    def apply_filtering(
+        self,
+        query: Query,
+        filters: dict
+    ) -> Query:
+        """Apply filtering to query based on filters dict."""
+        for field, value in filters.items():
+            if hasattr(self.model, field) and value is not None:
+                column = getattr(self.model, field)
+                query = query.filter(column == value)
+        return query
+    
+    def apply_searching(
+        self,
+        query: Query,
+        search_fields: List[str],
+        search_term: str
+    ) -> Query:
+        """Apply searching to query based on search fields and term."""
+        if search_term:
+            search_term = f"%{search_term}%"
+            search_filters = [
+                getattr(self.model, field).ilike(search_term)
+                for field in search_fields
+                if hasattr(self.model, field)
+            ]
+            if search_filters:
+                query = query.filter(or_(*search_filters))
+        return query
+
+    def apply_sorting(
+        self,
+        query: Query,
+        sort_by: str,
+        order: str = "desc"
+    ) -> Query:
+        """Apply sorting to query."""
+        if hasattr(self.model, sort_by):
+            column = getattr(self.model, sort_by)
+            if order == "asc":
+                query = query.order_by(asc(column))
+            else:
+                query = query.order_by(desc(column))
+        return query
 
     def create(self, **kwargs) -> ModelType:
         """Create a new record."""
