@@ -1,11 +1,15 @@
+import math
+from typing import Optional
 from fastapi import Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_db
 from app.core.enums import EntityEnum, HistoryAction, UserRole
+from app.core.helpers import get_total_pages
 from app.repositories.project_history_repository import ProjectHistoryRepository
 from app.repositories.project_repository import ProjectRepository
 from app.repositories.project_member_repository import ProjectMemberRepository
+from app.schemas.pagination import PaginatedResponse
 from app.schemas.project import ProjectCreate, ProjectUpdate
 from app.services.base_service import BaseService
 
@@ -17,8 +21,36 @@ class ProjectService(BaseService[ProjectRepository]):
         self.member_repo = ProjectMemberRepository(db)
         self.project_history_repo = ProjectHistoryRepository(db)
 
-    def get_user_projects(self, user_id: int):
-        return self.repository.get_user_projects(user_id)
+    def get_user_projects(
+        self,
+        user_id: int,
+        page: int = 1,
+        page_size: int = 20,
+        status: Optional[str] = None,
+        search: Optional[str] = None,
+        sort_by: str = "created_at",
+        order: str = "asc",
+    ) -> PaginatedResponse:
+        """Get paginated, filtered, and sorted projects."""
+        items, total = self.repository.get_user_projects(
+            user_id=user_id,
+            page=page,
+            page_size=page_size,
+            status=status,
+            search=search,
+            sort_by=sort_by,
+            order=order,
+        )
+
+        total_pages = get_total_pages(total, page_size)
+
+        return PaginatedResponse(
+            items=items,
+            total=total,
+            page=page,
+            page_size=page_size,
+            total_pages=total_pages,
+        )
 
     def get_project_detail(self, project_id: int, user_id: int):
         member = self.member_repo.get_member_project(project_id, user_id)
@@ -27,7 +59,13 @@ class ProjectService(BaseService[ProjectRepository]):
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="You are not a member of this project",
             )
-        return self.get_by_id_or_404(entity_id=project_id, entity_name=EntityEnum.PROJECT.value)
+        detail_project = self.repository.get_project_detail(project_id)
+        if not detail_project:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Project not found",
+            )
+        return detail_project
 
     def create_project(self, data: ProjectCreate, owner_id: int):
         project = self.repository.create(

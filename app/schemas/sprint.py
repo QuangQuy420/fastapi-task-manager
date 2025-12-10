@@ -13,7 +13,7 @@ class SprintBase(BaseModel):
 
 
 class SprintCreate(SprintBase):
-    project_id: int
+    pass
 
 
 class SprintUpdate(BaseModel):

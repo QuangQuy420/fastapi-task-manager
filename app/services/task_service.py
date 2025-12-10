@@ -1,13 +1,16 @@
+from typing import Optional
 from fastapi import Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_db
 from app.core.enums import EntityEnum, HistoryAction, UserRole
-from app.core.helpers import format_date_to_string
+from app.core.helpers import format_date_to_string, get_total_pages
 from app.repositories.project_member_repository import ProjectMemberRepository
 from app.repositories.project_repository import ProjectRepository
+from app.repositories.sprint_repository import SprintRepository
 from app.repositories.task_history_repository import TaskHistoryRepository
 from app.repositories.task_repository import TaskRepository
+from app.schemas.pagination import PaginatedResponse
 from app.schemas.task import TaskCreate, TaskUpdate
 from app.services.base_service import BaseService
 
@@ -19,6 +22,7 @@ class TaskService(BaseService[TaskRepository]):
         self.member_repo = ProjectMemberRepository(db)
         self.task_history_repo = TaskHistoryRepository(db)
         self.project_repo = ProjectRepository(db)
+        self.sprint_repo = SprintRepository(db)
 
     def _validate_assigned_user(self, project_id: int, assigned_to: int | None):
         """Ensure assigned user is a project member."""
@@ -31,16 +35,85 @@ class TaskService(BaseService[TaskRepository]):
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Cannot assign task to user who is not a project member",
             )
+    
+    def _validate_assigned_sprint(self, project_id: int, sprint_id: int):
+        """Ensure assigned sprint belongs to the project."""
+        sprint = self.sprint_repo.get_sprint_by_id_and_project_id(sprint_id, project_id)
 
-    def create_task(self, data: TaskCreate, user_id: int):
+        if not sprint:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Assigned sprint does not belong to the project",
+            )
+
+    def get_task_detail(self, task_id: int, user_id: int):
+        """Get task detail by ID."""
+        task = self.get_by_id_or_404(entity_id=task_id, entity_name=EntityEnum.TASK.value)
+
+        self.member_repo.check_permissions(
+            project_id=task.project_id,
+            user_id=user_id,
+            required_roles=[UserRole.OWNER.value, UserRole.MAINTAINER.value, UserRole.MEMBER.value, UserRole.VIEWER.value],
+        )
+
+        return task
+    
+    def get_project_tasks(
+        self,
+        project_id: int,
+        user_id: int,
+        page: int = 1,
+        page_size: int = 20,
+        status: Optional[str] = None,
+        priority: Optional[str] = None,
+        assigned_to: Optional[int] = None,
+        sprint_id: Optional[int] = None,
+        search: Optional[str] = None,
+        sort_by: str = "created_at",
+        order: str = "asc",
+    ):
+        """Get paginated, filtered, and sorted tasks for a sprint."""
+
+        self.member_repo.check_permissions(
+            project_id=project_id,
+            user_id=user_id,
+            required_roles=[UserRole.OWNER.value, UserRole.MAINTAINER.value, UserRole.MEMBER.value],
+        )
+        
+        items, total = self.repository.get_project_tasks(
+            project_id=project_id,
+            user_id=user_id,
+            page=page,
+            page_size=page_size,
+            status=status,
+            priority=priority,
+            assigned_to=assigned_to,
+            sprint_id=sprint_id,
+            search=search,
+            sort_by=sort_by,
+            order=order,
+        )
+
+        total_pages = get_total_pages(total, page_size)
+
+        return PaginatedResponse(
+            items=items,
+            total=total,
+            page=page,
+            page_size=page_size,
+            total_pages=total_pages,
+        )
+
+
+    def create_task(self, project_id: int, data: TaskCreate, user_id: int):
         """Create a new task."""
         self.member_repo.check_permissions(
-            project_id=data.project_id,
+            project_id=project_id,
             user_id=user_id,
             required_roles=[UserRole.OWNER.value, UserRole.MAINTAINER.value, UserRole.MEMBER.value],
         )
 
-        project = self.project_repo.get_by_id(id=data.project_id)
+        project = self.project_repo.get_by_id(id=project_id)
         if not project or getattr(project, "deleted_at", None) is not None:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -49,7 +122,10 @@ class TaskService(BaseService[TaskRepository]):
 
         # Validate assigned_to is project member
         if data.assigned_to:
-            self._validate_assigned_user(data.project_id, data.assigned_to)
+            self._validate_assigned_user(project_id, data.assigned_to)
+
+        if data.sprint_id:
+            self._validate_assigned_sprint(project_id, data.sprint_id)
 
         task_data = data.model_dump()
 

@@ -1,7 +1,9 @@
 from datetime import datetime, date
+from typing import List
 from pydantic import BaseModel, Field
 
 from app.core.enums import ProjectStatus
+from app.schemas.sprint import SprintRead
 
 
 # ---- Project ----
@@ -24,6 +26,13 @@ class ProjectRead(ProjectBase):
     managed_by: int
     created_at: datetime
     updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class ProjectDetailRead(ProjectRead):
+    sprints: List[SprintRead] = []
 
     class Config:
         from_attributes = True
