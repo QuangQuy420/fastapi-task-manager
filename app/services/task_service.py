@@ -28,14 +28,14 @@ class TaskService(BaseService[TaskRepository]):
         """Ensure assigned user is a project member."""
         if assigned_to is None:
             return
-        
+
         is_member = self.member_repo.get_member_project(project_id, assigned_to)
         if not is_member:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Cannot assign task to user who is not a project member",
             )
-    
+
     def _validate_assigned_sprint(self, project_id: int, sprint_id: int):
         """Ensure assigned sprint belongs to the project."""
         sprint = self.sprint_repo.get_sprint_by_id_and_project_id(sprint_id, project_id)
@@ -48,16 +48,23 @@ class TaskService(BaseService[TaskRepository]):
 
     def get_task_detail(self, task_id: int, user_id: int):
         """Get task detail by ID."""
-        task = self.get_by_id_or_404(entity_id=task_id, entity_name=EntityEnum.TASK.value)
+        task = self.get_by_id_or_404(
+            entity_id=task_id, entity_name=EntityEnum.TASK.value
+        )
 
         self.member_repo.check_permissions(
             project_id=task.project_id,
             user_id=user_id,
-            required_roles=[UserRole.OWNER.value, UserRole.MAINTAINER.value, UserRole.MEMBER.value, UserRole.VIEWER.value],
+            required_roles=[
+                UserRole.OWNER.value,
+                UserRole.MAINTAINER.value,
+                UserRole.MEMBER.value,
+                UserRole.VIEWER.value,
+            ],
         )
 
         return task
-    
+
     def get_project_tasks(
         self,
         project_id: int,
@@ -77,9 +84,13 @@ class TaskService(BaseService[TaskRepository]):
         self.member_repo.check_permissions(
             project_id=project_id,
             user_id=user_id,
-            required_roles=[UserRole.OWNER.value, UserRole.MAINTAINER.value, UserRole.MEMBER.value],
+            required_roles=[
+                UserRole.OWNER.value,
+                UserRole.MAINTAINER.value,
+                UserRole.MEMBER.value,
+            ],
         )
-        
+
         items, total = self.repository.get_project_tasks(
             project_id=project_id,
             user_id=user_id,
@@ -104,13 +115,16 @@ class TaskService(BaseService[TaskRepository]):
             total_pages=total_pages,
         )
 
-
     def create_task(self, project_id: int, data: TaskCreate, user_id: int):
         """Create a new task."""
         self.member_repo.check_permissions(
             project_id=project_id,
             user_id=user_id,
-            required_roles=[UserRole.OWNER.value, UserRole.MAINTAINER.value, UserRole.MEMBER.value],
+            required_roles=[
+                UserRole.OWNER.value,
+                UserRole.MAINTAINER.value,
+                UserRole.MEMBER.value,
+            ],
         )
 
         project = self.project_repo.get_by_id(id=project_id)
@@ -144,13 +158,19 @@ class TaskService(BaseService[TaskRepository]):
 
     def update_task(self, task_id: int, data: TaskUpdate, user_id: int):
         """Update an existing task."""
-        task = self.get_by_id_or_404(entity_id=task_id, for_update=True, entity_name=EntityEnum.TASK.value)
+        task = self.get_by_id_or_404(
+            entity_id=task_id, for_update=True, entity_name=EntityEnum.TASK.value
+        )
 
         # Check permissions
         self.member_repo.check_permissions(
             project_id=task.project_id,
             user_id=user_id,
-            required_roles=[UserRole.OWNER.value, UserRole.MAINTAINER.value, UserRole.MEMBER.value],
+            required_roles=[
+                UserRole.OWNER.value,
+                UserRole.MAINTAINER.value,
+                UserRole.MEMBER.value,
+            ],
         )
 
         update_data = data.model_dump(exclude_unset=True)
@@ -184,7 +204,7 @@ class TaskService(BaseService[TaskRepository]):
             task_id=task.id,
             changed_by=user_id,
             action=HistoryAction.UPDATE.value,
-            details={"before": before, "after": after}
+            details={"before": before, "after": after},
         )
 
         self.commit_or_rollback()
@@ -192,13 +212,19 @@ class TaskService(BaseService[TaskRepository]):
 
     def delete_task(self, task_id: int, user_id: int):
         """Soft delete a task."""
-        task = self.get_by_id_or_404(entity_id=task_id, for_update=True, entity_name=EntityEnum.TASK.value)
+        task = self.get_by_id_or_404(
+            entity_id=task_id, for_update=True, entity_name=EntityEnum.TASK.value
+        )
 
         # Check permissions
         self.member_repo.check_permissions(
             project_id=task.project_id,
             user_id=user_id,
-            required_roles=[UserRole.OWNER.value, UserRole.MAINTAINER.value, UserRole.MEMBER.value],
+            required_roles=[
+                UserRole.OWNER.value,
+                UserRole.MAINTAINER.value,
+                UserRole.MEMBER.value,
+            ],
         )
 
         self.task_history_repo.create(

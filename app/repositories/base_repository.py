@@ -4,7 +4,7 @@ from sqlalchemy import func, or_, asc, desc
 
 from app.core.db import Base
 
-ModelType = TypeVar("ModelType", bound=Base) # type: ignore
+ModelType = TypeVar("ModelType", bound=Base)  # type: ignore
 
 
 class BaseRepository(Generic[ModelType]):
@@ -22,10 +22,7 @@ class BaseRepository(Generic[ModelType]):
         return query.first()
 
     def get_paginated(
-        self, 
-        query: Query, 
-        page: int = 1, 
-        page_size: int = 20
+        self, query: Query, page: int = 1, page_size: int = 20
     ) -> Tuple[List[ModelType], int]:
         """Execute paginated query and return items + total count."""
         total = query.count()
@@ -33,23 +30,16 @@ class BaseRepository(Generic[ModelType]):
         items = query.offset(skip).limit(page_size).all()
         return items, total
 
-    def apply_filtering(
-        self,
-        query: Query,
-        filters: dict
-    ) -> Query:
+    def apply_filtering(self, query: Query, filters: dict) -> Query:
         """Apply filtering to query based on filters dict."""
         for field, value in filters.items():
             if hasattr(self.model, field) and value is not None:
                 column = getattr(self.model, field)
                 query = query.filter(column == value)
         return query
-    
+
     def apply_searching(
-        self,
-        query: Query,
-        search_fields: List[str],
-        search_term: str
+        self, query: Query, search_fields: List[str], search_term: str
     ) -> Query:
         """Apply searching to query based on search fields and term."""
         if search_term:
@@ -63,12 +53,7 @@ class BaseRepository(Generic[ModelType]):
                 query = query.filter(or_(*search_filters))
         return query
 
-    def apply_sorting(
-        self,
-        query: Query,
-        sort_by: str,
-        order: str = "desc"
-    ) -> Query:
+    def apply_sorting(self, query: Query, sort_by: str, order: str = "desc") -> Query:
         """Apply sorting to query."""
         if hasattr(self.model, sort_by):
             column = getattr(self.model, sort_by)

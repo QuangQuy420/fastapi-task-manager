@@ -16,15 +16,20 @@ class ProjectMember(Base):
 
     id = Column(Integer, primary_key=True)
     project_id = Column(
-        Integer, ForeignKey("projects.id", ondelete="CASCADE"), nullable=False, index=True
+        Integer,
+        ForeignKey("projects.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
     )
     user_id = Column(
         Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
     )
-    role = Column(String(20), nullable=False, default=UserRole.VIEWER.value)  # owner/maintainer/member/viewer
+    role = Column(
+        String(20), nullable=False, default=UserRole.VIEWER.value
+    )  # owner/maintainer/member/viewer
 
-    project=relationship("Project", back_populates="project_members")
-    user=relationship("User", back_populates="project_members")
+    project = relationship("Project", back_populates="project_members")
+    user = relationship("User", back_populates="project_members")
 
     __table_args__ = (
         UniqueConstraint("project_id", "user_id", name="uq_project_user"),

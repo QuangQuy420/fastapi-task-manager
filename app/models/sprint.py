@@ -19,7 +19,10 @@ class Sprint(Base):
 
     id = Column(Integer, primary_key=True)
     project_id = Column(
-        Integer, ForeignKey("projects.id", ondelete="CASCADE"), nullable=False, index=True
+        Integer,
+        ForeignKey("projects.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
     )
 
     title = Column(String(255), nullable=False)

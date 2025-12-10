@@ -4,13 +4,14 @@ from fastapi import APIRouter, Depends, status, Query
 from app.api.deps import get_current_user
 from app.models.user import User
 from app.schemas.pagination import PaginatedResponse
-from app.schemas.sprint import SprintCreate, SprintRead, SprintUpdate
+from app.schemas.sprint import SprintRead, SprintUpdate
 from app.schemas.task import TaskRead
 from app.services.sprint_service import SprintService
 from app.services.task_service import TaskService
 
 
 router = APIRouter(prefix="/sprints", tags=["sprints"])
+
 
 @router.get(
     "/{sprint_id}",
@@ -25,7 +26,9 @@ def get_sprint_detail(
     """
     Get sprint detail by ID.
     """
-    return sprint_service.get_sprint_detail(sprint_id=sprint_id, user_id=current_user.id)
+    return sprint_service.get_sprint_detail(
+        sprint_id=sprint_id, user_id=current_user.id
+    )
 
 
 @router.patch(
@@ -42,7 +45,9 @@ def update_sprint(
     """
     Update an existing sprint.
     """
-    return sprint_service.update_sprint(sprint_id=sprint_id, data=data, user_id=current_user.id)
+    return sprint_service.update_sprint(
+        sprint_id=sprint_id, data=data, user_id=current_user.id
+    )
 
 
 @router.delete(
@@ -72,8 +77,12 @@ def list_sprint_tasks(
     page_size: int = Query(default=20, ge=1, le=100, description="Items per page"),
     status: Optional[str] = Query(default=None, description="Filter by status"),
     priority: Optional[int] = Query(default=None, description="Filter by priority"),
-    assigned_to: Optional[int] = Query(default=None, description="Filter by assigned user"),
-    search: Optional[str] = Query(default=None, description="Search in title/description"),
+    assigned_to: Optional[int] = Query(
+        default=None, description="Filter by assigned user"
+    ),
+    search: Optional[str] = Query(
+        default=None, description="Search in title/description"
+    ),
     sort_by: str = Query(default="created_at", description="Sort by field"),
     order: str = Query(default="desc", regex="^(asc|desc)$", description="Sort order"),
     current_user: User = Depends(get_current_user),
