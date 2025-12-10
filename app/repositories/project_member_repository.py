@@ -1,9 +1,8 @@
 from typing import Iterable
 
-from fastapi import Depends, HTTPException, status
+from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
-from app.api.deps import get_db
 from app.models.project_member import ProjectMember
 from app.repositories.base_repository import BaseRepository
 
@@ -21,8 +20,10 @@ class ProjectMemberRepository(BaseRepository[ProjectMember]):
             )
             .first()
         )
-    
-    def check_permissions(self, project_id: int, user_id: int, required_roles: list[str]):
+
+    def check_permissions(
+        self, project_id: int, user_id: int, required_roles: list[str]
+    ):
         member = self.get_member_project(project_id, user_id)
         if not member or member.role not in required_roles:
             raise HTTPException(

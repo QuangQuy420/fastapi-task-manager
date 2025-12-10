@@ -3,7 +3,12 @@ from fastapi import APIRouter, Depends, status, Query
 
 from app.api.deps import get_current_user
 from app.schemas.pagination import PaginatedResponse
-from app.schemas.project import ProjectCreate, ProjectDetailRead, ProjectUpdate, ProjectRead
+from app.schemas.project import (
+    ProjectCreate,
+    ProjectDetailRead,
+    ProjectUpdate,
+    ProjectRead,
+)
 from app.schemas.sprint import SprintCreate, SprintRead
 from app.schemas.task import TaskCreate, TaskRead
 from app.services.project_service import ProjectService
@@ -37,7 +42,9 @@ def list_my_projects(
     page: int = Query(default=1, ge=1, description="Page number"),
     page_size: int = Query(default=20, ge=1, le=100, description="Items per page"),
     status: Optional[str] = Query(default=None, description="Filter by status"),
-    search: Optional[str] = Query(default=None, description="Search in title/description"),
+    search: Optional[str] = Query(
+        default=None, description="Search in title/description"
+    ),
     sort_by: str = Query(default="created_at", description="Sort by field"),
     order: str = Query(default="asc", regex="^(asc|desc)$", description="Sort order"),
     current_user: User = Depends(get_current_user),
@@ -45,7 +52,7 @@ def list_my_projects(
 ):
     """
     List projects with pagination, filtering, and sorting.
-    
+
     - **page**: Page number (default: 1)
     - **page_size**: Items per page (default: 20, max: 100)
     - **status**: Filter by project status (optional)
@@ -122,7 +129,9 @@ def list_project_sprints(
     page: int = Query(default=1, ge=1, description="Page number"),
     page_size: int = Query(default=20, ge=1, le=100, description="Items per page"),
     status: Optional[str] = Query(default=None, description="Filter by status"),
-    search: Optional[str] = Query(default=None, description="Search in title/description"),
+    search: Optional[str] = Query(
+        default=None, description="Search in title/description"
+    ),
     start_date: Optional[str] = Query(default=None, description="Filter by start date"),
     end_date: Optional[str] = Query(default=None, description="Filter by end date"),
     sort_by: str = Query(default="created_at", description="Sort by field"),
@@ -132,7 +141,7 @@ def list_project_sprints(
 ):
     """
     List sprints for a specific project with pagination.
-    
+
     - **project_id**: ID of the project
     - **page**: Page number (default: 1)
     - **page_size**: Items per page (default: 20, max: 100)
@@ -188,9 +197,13 @@ def list_project_tasks(
     page_size: int = Query(default=20, ge=1, le=100, description="Items per page"),
     status: Optional[str] = Query(default=None, description="Filter by status"),
     priority: Optional[int] = Query(default=None, description="Filter by priority"),
-    assigned_to: Optional[int] = Query(default=None, description="Filter by assigned user"),
+    assigned_to: Optional[int] = Query(
+        default=None, description="Filter by assigned user"
+    ),
     sprint_id: Optional[int] = Query(default=None, description="Filter by sprint"),
-    search: Optional[str] = Query(default=None, description="Search in title/description"),
+    search: Optional[str] = Query(
+        default=None, description="Search in title/description"
+    ),
     sort_by: str = Query(default="created_at", description="Sort by field"),
     order: str = Query(default="desc", regex="^(asc|desc)$", description="Sort order"),
     current_user: User = Depends(get_current_user),
@@ -228,4 +241,6 @@ def create_task(
     """Create a new task in a project."""
     # Override project_id from URL
     data.project_id = project_id
-    return task_service.create_task(data=data, project_id=project_id, user_id=current_user.id)
+    return task_service.create_task(
+        data=data, project_id=project_id, user_id=current_user.id
+    )

@@ -24,23 +24,19 @@ class TaskRepository(BaseRepository[Task]):
         sort_by: str = "created_at",
         order: str = "asc",
     ):
-        query = (
-            self.db.query(Task)
-            .filter(
-                Task.project_id == project_id,
-                Task.deleted_at.is_(None)
-            )
+        query = self.db.query(Task).filter(
+            Task.project_id == project_id, Task.deleted_at.is_(None)
         )
 
         if status:
             query = self.apply_filtering(query, {"status": status})
-        
+
         if priority:
             query = self.apply_filtering(query, {"priority": priority})
-        
+
         if assigned_to:
             query = self.apply_filtering(query, {"assigned_to": assigned_to})
-        
+
         if sprint_id:
             query = self.apply_filtering(query, {"sprint_id": sprint_id})
 
@@ -50,7 +46,7 @@ class TaskRepository(BaseRepository[Task]):
                 search_fields=["title", "description"],
                 search_term=search,
             )
-        
+
         query = self.apply_sorting(query, sort_by, order)
 
         return self.get_paginated(query, page, page_size)
@@ -58,10 +54,7 @@ class TaskRepository(BaseRepository[Task]):
     def get_sprint_tasks(self, sprint_id: int) -> Iterable[Task]:
         return (
             self.db.query(Task)
-            .filter(
-                Task.sprint_id == sprint_id,
-                Task.deleted_at.is_(None)
-            )
+            .filter(Task.sprint_id == sprint_id, Task.deleted_at.is_(None))
             .all()
         )
 

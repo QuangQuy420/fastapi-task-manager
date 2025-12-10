@@ -23,7 +23,9 @@ class SprintService(BaseService[SprintRepository]):
         self.project_repo = ProjectRepository(db)
 
     def get_sprint_detail(self, sprint_id: int, user_id: int):
-        sprint = self.get_by_id_or_404(entity_id=sprint_id, entity_name=EntityEnum.SPRINT.value)
+        sprint = self.get_by_id_or_404(
+            entity_id=sprint_id, entity_name=EntityEnum.SPRINT.value
+        )
 
         self.member_repo.check_permissions(
             project_id=sprint.project_id,
@@ -95,7 +97,7 @@ class SprintService(BaseService[SprintRepository]):
         if not project or getattr(project, "deleted_at", None) is not None:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Project not found or has been deleted",
+                detail="Project not found or has been deleted",
             )
 
         sprint_data = data.model_dump()
@@ -108,15 +110,17 @@ class SprintService(BaseService[SprintRepository]):
             sprint_id=sprint.id,
             changed_by=user_id,
             action=HistoryAction.CREATE.value,
-            details=None
+            details=None,
         )
 
         self.commit_or_rollback()
         return sprint
 
     def update_sprint(self, sprint_id: int, data: SprintUpdate, user_id: int):
-        sprint = self.get_by_id_or_404(entity_id=sprint_id, for_update=True, entity_name=EntityEnum.SPRINT.value)
-        
+        sprint = self.get_by_id_or_404(
+            entity_id=sprint_id, for_update=True, entity_name=EntityEnum.SPRINT.value
+        )
+
         self.member_repo.check_permissions(
             project_id=sprint.project_id,
             user_id=user_id,
@@ -124,7 +128,7 @@ class SprintService(BaseService[SprintRepository]):
         )
 
         update_data = data.model_dump(exclude_unset=True)
-        
+
         before = {
             "title": sprint.title,
             "description": sprint.description,
@@ -154,7 +158,9 @@ class SprintService(BaseService[SprintRepository]):
         return self.refresh(sprint)
 
     def delete_sprint(self, sprint_id: int, user_id: int):
-        sprint = self.get_by_id_or_404(entity_id=sprint_id, for_update=True, entity_name=EntityEnum.SPRINT.value)
+        sprint = self.get_by_id_or_404(
+            entity_id=sprint_id, for_update=True, entity_name=EntityEnum.SPRINT.value
+        )
 
         self.member_repo.check_permissions(
             project_id=sprint.project_id,
@@ -166,7 +172,7 @@ class SprintService(BaseService[SprintRepository]):
             sprint_id=sprint.id,
             changed_by=user_id,
             action=HistoryAction.DELETE.value,
-            details=None
+            details=None,
         )
 
         self.repository.delete_sprint(sprint)

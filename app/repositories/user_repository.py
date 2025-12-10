@@ -13,7 +13,9 @@ class UserRepository(BaseRepository[User]):
     def get_by_email(self, email: str) -> User | None:
         return self.db.query(User).filter(User.email == email).first()
 
-    def create_user(self, email: str, full_name: str | None, hashed_password: str) -> User:
+    def create_user(
+        self, email: str, full_name: str | None, hashed_password: str
+    ) -> User:
         user = User(
             email=email,
             full_name=full_name,

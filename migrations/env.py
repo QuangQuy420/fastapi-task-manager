@@ -3,7 +3,8 @@ import sys
 from logging.config import fileConfig
 
 from alembic import context
-from sqlalchemy import pool
+
+from app.core.db import Base, engine  # 👈 your Base and engine
 
 # --- Make "app" importable ---
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -11,9 +12,6 @@ if BASE_DIR not in sys.path:
     sys.path.append(BASE_DIR)
 # ------------------------------
 
-from app.core.db import Base, engine  # 👈 your Base and engine
-
-import app.models
 
 # Alembic config object
 config = context.config

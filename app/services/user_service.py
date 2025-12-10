@@ -44,7 +44,9 @@ class UserService(BaseService[UserRepository]):
                 detail="Email already registered",
             )
 
-    def authenticate_and_create_tokens(self, email: str, password: str) -> tuple[str, str]:
+    def authenticate_and_create_tokens(
+        self, email: str, password: str
+    ) -> tuple[str, str]:
         user = self.repository.get_by_email(email)
         if not user or not verify_password(password, user.hashed_password):
             raise HTTPException(

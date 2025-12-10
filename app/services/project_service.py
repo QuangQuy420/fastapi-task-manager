@@ -1,5 +1,5 @@
-import math
 from typing import Optional
+
 from fastapi import Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
@@ -7,8 +7,8 @@ from app.api.deps import get_db
 from app.core.enums import EntityEnum, HistoryAction, UserRole
 from app.core.helpers import get_total_pages
 from app.repositories.project_history_repository import ProjectHistoryRepository
-from app.repositories.project_repository import ProjectRepository
 from app.repositories.project_member_repository import ProjectMemberRepository
+from app.repositories.project_repository import ProjectRepository
 from app.schemas.pagination import PaginatedResponse
 from app.schemas.project import ProjectCreate, ProjectUpdate
 from app.services.base_service import BaseService
@@ -85,16 +85,20 @@ class ProjectService(BaseService[ProjectRepository]):
             project_id=project.id,
             changed_by=owner_id,
             action=HistoryAction.CREATE.value,
-            details=None
+            details=None,
         )
 
         self.commit_or_rollback()
         return self.refresh(project)
 
     def update_project(self, project_id: int, data: ProjectUpdate, user_id: int):
-        self.member_repo.check_permissions(project_id, user_id, [UserRole.OWNER.value, UserRole.MAINTAINER.value])
+        self.member_repo.check_permissions(
+            project_id, user_id, [UserRole.OWNER.value, UserRole.MAINTAINER.value]
+        )
 
-        project = self.get_by_id_or_404(entity_id=project_id, for_update=True, entity_name=EntityEnum.PROJECT.value)
+        project = self.get_by_id_or_404(
+            entity_id=project_id, for_update=True, entity_name=EntityEnum.PROJECT.value
+        )
 
         update_data = data.model_dump(exclude_unset=True)
         before = {
@@ -124,7 +128,9 @@ class ProjectService(BaseService[ProjectRepository]):
     def delete_project(self, project_id: int, user_id: int):
         self.member_repo.check_permissions(project_id, user_id, [UserRole.OWNER.value])
 
-        project = self.get_by_id_or_404(entity_id=project_id, for_update=True, entity_name=EntityEnum.PROJECT.value)
+        project = self.get_by_id_or_404(
+            entity_id=project_id, for_update=True, entity_name=EntityEnum.PROJECT.value
+        )
 
         self.project_history_repo.create(
             project_id=project.id,

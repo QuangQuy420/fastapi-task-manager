@@ -25,10 +25,7 @@ class ProjectRepository(BaseRepository[Project]):
         query = (
             self.db.query(Project)
             .join(ProjectMember, ProjectMember.project_id == Project.id)
-            .filter(
-                ProjectMember.user_id == user_id,
-                Project.deleted_at.is_(None)
-            )
+            .filter(ProjectMember.user_id == user_id, Project.deleted_at.is_(None))
         )
 
         # Apply filters
@@ -52,10 +49,7 @@ class ProjectRepository(BaseRepository[Project]):
         return (
             self.db.query(Project)
             .options(joinedload(Project.sprints))
-            .filter(
-                Project.id == project_id,
-                Project.deleted_at.is_(None)
-            )
+            .filter(Project.id == project_id, Project.deleted_at.is_(None))
             .first()
         )
 

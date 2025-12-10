@@ -1,4 +1,3 @@
-from typing import Iterable
 from sqlalchemy.orm import Session
 
 from app.models.task_history import TaskHistory

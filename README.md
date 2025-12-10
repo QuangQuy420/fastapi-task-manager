@@ -17,6 +17,14 @@ python -m app.core.seed --truncate
 
 ---
 
+## Format code
+```bash
+ruff check . --fix
+ruff format .
+```
+
+---
+
 # List with pagination only
 GET /projects?page=1&page_size=20
 

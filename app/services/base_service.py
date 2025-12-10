@@ -18,7 +18,12 @@ class BaseService(Generic[RepositoryType]):
         self.db = db
         self.repository = repository
 
-    def get_by_id_or_404(self, entity_id: int, for_update: bool = False, entity_name: str = EntityEnum.Entity.value):
+    def get_by_id_or_404(
+        self,
+        entity_id: int,
+        for_update: bool = False,
+        entity_name: str = EntityEnum.Entity.value,
+    ):
         """Get entity by ID or raise 404."""
         entity = self.repository.get_by_id(entity_id, for_update)
         if not entity or getattr(entity, "deleted_at", None) is not None:
