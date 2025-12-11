@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   # --- FastAPI App ---
   api:
@@ -12,6 +10,8 @@ services:
       DATABASE_URL: postgresql+asyncpg://task_user:123456@postgres:5432/task_db
     depends_on:
       - postgres
+    volumes:
+      - .:/app
 
   # --- Postgres Database ---
   postgres:
