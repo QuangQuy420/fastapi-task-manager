@@ -1,6 +1,19 @@
 version: "3.9"
 
 services:
+  # --- FastAPI App ---
+  api:
+    build: .
+    container_name: fastapi-app
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql://task_user:task_password@postgres:5432/task_db
+    depends_on:
+      - postgres
+
+  # --- Postgres Database ---
   postgres:
     image: postgres:16
     container_name: taskmanager-postgres

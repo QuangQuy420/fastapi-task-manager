@@ -1,8 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from fastapi.security import OAuth2PasswordRequestForm
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import get_db
 from app.schemas.auth import Token
 from app.schemas.user import UserCreate, UserRead
 from app.services.user_service import UserService
@@ -10,14 +8,10 @@ from app.services.user_service import UserService
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 
-def get_user_service(db: AsyncSession = Depends(get_db)) -> UserService:
-    return UserService(db)
-
-
 @router.post("/register", response_model=UserRead)
 async def register(
     data: UserCreate,
-    user_service: UserService = Depends(get_user_service),
+    user_service: UserService = Depends(),
 ):
     return await user_service.register(data)
 
@@ -26,7 +20,7 @@ async def register(
 async def login(
     response: Response,
     form_data: OAuth2PasswordRequestForm = Depends(),
-    user_service: UserService = Depends(get_user_service),
+    user_service: UserService = Depends(),
 ):
     access_token, refresh_token = await user_service.authenticate_and_create_tokens(
         email=form_data.username,
@@ -50,7 +44,7 @@ async def login(
 async def refresh(
     request: Request,
     response: Response,
-    user_service: UserService = Depends(get_user_service),
+    user_service: UserService = Depends(),
 ):
     refresh_token = request.cookies.get("refresh_token")
     if not refresh_token:

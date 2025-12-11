@@ -47,7 +47,7 @@ async def list_my_projects(
         default=None, description="Search in title/description"
     ),
     sort_by: str = Query(default="created_at", description="Sort by field"),
-    order: str = Query(default="asc", regex="^(asc|desc)$", description="Sort order"),
+    order: str = Query(default="asc", pattern="^(asc|desc)$", description="Sort order"),
     current_user: User = Depends(get_current_user),
     project_service: ProjectService = Depends(),
 ):
@@ -126,7 +126,7 @@ async def list_project_sprints(
     start_date: Optional[str] = Query(default=None, description="Filter by start date"),
     end_date: Optional[str] = Query(default=None, description="Filter by end date"),
     sort_by: str = Query(default="created_at", description="Sort by field"),
-    order: str = Query(default="asc", regex="^(asc|desc)$", description="Sort order"),
+    order: str = Query(default="asc", pattern="^(asc|desc)$", description="Sort order"),
     current_user: User = Depends(get_current_user),
     sprint_service: SprintService = Depends(),
 ):
@@ -181,7 +181,9 @@ async def list_project_tasks(
         default=None, description="Search in title/description"
     ),
     sort_by: str = Query(default="created_at", description="Sort by field"),
-    order: str = Query(default="desc", regex="^(asc|desc)$", description="Sort order"),
+    order: str = Query(
+        default="desc", pattern="^(asc|desc)$", description="Sort order"
+    ),
     current_user: User = Depends(get_current_user),
     task_service: TaskService = Depends(),
 ):
@@ -211,7 +213,6 @@ async def create_task(
     current_user: User = Depends(get_current_user),
     task_service: TaskService = Depends(),
 ):
-    data.project_id = project_id
     return await task_service.create_task(
         data=data, project_id=project_id, user_id=current_user.id
     )
