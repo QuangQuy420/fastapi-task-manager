@@ -5,9 +5,9 @@ from sqlalchemy.orm import declarative_base
 
 POSTGRES_DB = os.getenv("POSTGRES_DB", "task_db")
 POSTGRES_USER = os.getenv("POSTGRES_USER", "task_user")
-POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD", "task_password")
+POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD", "123456")
 POSTGRES_HOST = os.getenv("POSTGRES_HOST", "localhost")
-POSTGRES_PORT = os.getenv("POSTGRES_PORT", "5433")
+POSTGRES_PORT = os.getenv("POSTGRES_PORT", "5432")
 
 DATABASE_URL = os.getenv(
     "DATABASE_URL",

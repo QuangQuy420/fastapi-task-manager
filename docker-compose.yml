@@ -9,7 +9,7 @@ services:
     ports:
       - "8000:8000"
     environment:
-      DATABASE_URL: postgresql://task_user:task_password@postgres:5432/task_db
+      DATABASE_URL: postgresql+asyncpg://task_user:123456@postgres:5432/task_db
     depends_on:
       - postgres
 
@@ -21,11 +21,11 @@ services:
     environment:
       POSTGRES_DB: task_db
       POSTGRES_USER: task_user
-      POSTGRES_PASSWORD: task_password
+      POSTGRES_PASSWORD: 123456
     ports:
-      - "5433:5432"
+      - "5432:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - postgres_data_v2:/var/lib/postgresql/data
 
 volumes:
-  postgres_data:
+  postgres_data_v2:

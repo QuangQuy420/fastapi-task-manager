@@ -28,7 +28,6 @@ ENV/
 *.sqlite3
 
 # Alembic (optional migrations)
-alembic.ini
 alembic/
 versions/
 
