@@ -1,5 +1,6 @@
 from typing import Optional
-from fastapi import APIRouter, Depends, status, Query
+
+from fastapi import APIRouter, Depends, Query, status
 
 from app.api.deps import get_current_user
 from app.models.user import User
@@ -9,7 +10,6 @@ from app.schemas.task import TaskRead
 from app.services.sprint_service import SprintService
 from app.services.task_service import TaskService
 
-
 router = APIRouter(prefix="/sprints", tags=["sprints"])
 
 
@@ -18,15 +18,13 @@ router = APIRouter(prefix="/sprints", tags=["sprints"])
     response_model=SprintRead,
     status_code=status.HTTP_200_OK,
 )
-def get_sprint_detail(
+async def get_sprint_detail(
     sprint_id: int,
     current_user: User = Depends(get_current_user),
     sprint_service: SprintService = Depends(),
 ):
-    """
-    Get sprint detail by ID.
-    """
-    return sprint_service.get_sprint_detail(
+    """Get sprint detail by ID."""
+    return await sprint_service.get_sprint_detail(
         sprint_id=sprint_id, user_id=current_user.id
     )
 
@@ -36,16 +34,14 @@ def get_sprint_detail(
     response_model=SprintRead,
     status_code=status.HTTP_200_OK,
 )
-def update_sprint(
+async def update_sprint(
     sprint_id: int,
     data: SprintUpdate,
     current_user: User = Depends(get_current_user),
     sprint_service: SprintService = Depends(),
 ):
-    """
-    Update an existing sprint.
-    """
-    return sprint_service.update_sprint(
+    """Update an existing sprint."""
+    return await sprint_service.update_sprint(
         sprint_id=sprint_id, data=data, user_id=current_user.id
     )
 
@@ -54,24 +50,21 @@ def update_sprint(
     "/{sprint_id}",
     status_code=status.HTTP_204_NO_CONTENT,
 )
-def delete_sprint(
+async def delete_sprint(
     sprint_id: int,
     current_user: User = Depends(get_current_user),
     sprint_service: SprintService = Depends(),
 ):
-    """
-    Delete a sprint.
-    """
-    sprint_service.delete_sprint(sprint_id=sprint_id, user_id=current_user.id)
+    """Delete a sprint."""
+    await sprint_service.delete_sprint(sprint_id=sprint_id, user_id=current_user.id)
 
 
-# Nested routes for tasks within a sprint
 @router.get(
     "/{sprint_id}/tasks",
     response_model=PaginatedResponse[TaskRead],
     status_code=status.HTTP_200_OK,
 )
-def list_sprint_tasks(
+async def list_sprint_tasks(
     sprint_id: int,
     page: int = Query(default=1, ge=1, description="Page number"),
     page_size: int = Query(default=20, ge=1, le=100, description="Items per page"),
@@ -89,14 +82,15 @@ def list_sprint_tasks(
     task_service: TaskService = Depends(),
 ):
     """List all tasks in a sprint with filtering and pagination."""
-    return task_service.get_sprint_tasks(
-        sprint_id=sprint_id,
+    return await task_service.get_project_tasks(
+        project_id=0,
         user_id=current_user.id,
         page=page,
         page_size=page_size,
         status=status,
         priority=priority,
         assigned_to=assigned_to,
+        sprint_id=sprint_id,
         search=search,
         sort_by=sort_by,
         order=order,

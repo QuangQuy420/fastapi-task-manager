@@ -1,5 +1,7 @@
-from typing import Iterable, Optional
-from sqlalchemy.orm import Session
+from typing import List, Optional
+
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.enums import TaskStatus
 from app.models.task import Task
@@ -7,10 +9,10 @@ from app.repositories.base_repository import BaseRepository
 
 
 class TaskRepository(BaseRepository[Task]):
-    def __init__(self, db: Session):
+    def __init__(self, db: AsyncSession):
         super().__init__(Task, db)
 
-    def get_project_tasks(
+    async def get_project_tasks(
         self,
         project_id: int,
         user_id: int,
@@ -24,7 +26,7 @@ class TaskRepository(BaseRepository[Task]):
         sort_by: str = "created_at",
         order: str = "asc",
     ):
-        query = self.db.query(Task).filter(
+        query = select(Task).where(
             Task.project_id == project_id, Task.deleted_at.is_(None)
         )
 
@@ -49,15 +51,16 @@ class TaskRepository(BaseRepository[Task]):
 
         query = self.apply_sorting(query, sort_by, order)
 
-        return self.get_paginated(query, page, page_size)
+        return await self.get_paginated(query, page, page_size)
 
-    def get_sprint_tasks(self, sprint_id: int) -> Iterable[Task]:
-        return (
-            self.db.query(Task)
-            .filter(Task.sprint_id == sprint_id, Task.deleted_at.is_(None))
-            .all()
+    async def get_sprint_tasks(self, sprint_id: int) -> List[Task]:
+        query = select(Task).where(
+            Task.sprint_id == sprint_id, Task.deleted_at.is_(None)
         )
+        result = await self.db.execute(query)
+        return result.scalars().all()
 
-    def delete_task(self, task: Task) -> None:
-        self.soft_delete(task)
+    async def delete_task(self, task: Task) -> None:
+        await self.soft_delete(task)
         task.status = TaskStatus.ACHIEVED.value
+        await self.db.flush()

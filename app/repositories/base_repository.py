@@ -1,6 +1,8 @@
-from typing import Generic, TypeVar, Type, Optional, List, Tuple
-from sqlalchemy.orm import Session, Query
-from sqlalchemy import func, or_, asc, desc
+from typing import Generic, List, Optional, Tuple, Type, TypeVar
+
+from sqlalchemy import asc, desc, func, or_, select
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.sql import Select
 
 from app.core.db import Base
 
@@ -8,39 +10,51 @@ ModelType = TypeVar("ModelType", bound=Base)  # type: ignore
 
 
 class BaseRepository(Generic[ModelType]):
-    """Base repository with common CRUD operations."""
+    """Base repository with common Async CRUD operations."""
 
-    def __init__(self, model: Type[ModelType], db: Session):
+    def __init__(self, model: Type[ModelType], db: AsyncSession):
         self.model = model
         self.db = db
 
-    def get_by_id(self, id: int, for_update: bool = False) -> Optional[ModelType]:
+    async def get_by_id(self, id: int, for_update: bool = False) -> Optional[ModelType]:
         """Get a single record by ID."""
-        query = self.db.query(self.model).filter(self.model.id == id)
+        query = select(self.model).where(self.model.id == id)
+
         if for_update:
             query = query.with_for_update()
-        return query.first()
 
-    def get_paginated(
-        self, query: Query, page: int = 1, page_size: int = 20
+        result = await self.db.execute(query)
+        return result.scalars().first()
+
+    async def get_paginated(
+        self, query: Select, page: int = 1, page_size: int = 20
     ) -> Tuple[List[ModelType], int]:
-        """Execute paginated query and return items + total count."""
-        total = query.count()
-        skip = (page - 1) * page_size
-        items = query.offset(skip).limit(page_size).all()
+        """
+        Execute paginated query and return items + total count.
+        Note: 'query' argument must be a SQLAlchemy 'select' object.
+        """
+
+        count_query = select(func.count()).select_from(query.subquery())
+        total = await self.db.scalar(count_query) or 0
+
+        query = query.offset((page - 1) * page_size).limit(page_size)
+
+        result = await self.db.execute(query)
+        items = result.scalars().all()
+
         return items, total
 
-    def apply_filtering(self, query: Query, filters: dict) -> Query:
+    def apply_filtering(self, query: Select, filters: dict) -> Select:
         """Apply filtering to query based on filters dict."""
         for field, value in filters.items():
             if hasattr(self.model, field) and value is not None:
                 column = getattr(self.model, field)
-                query = query.filter(column == value)
+                query = query.where(column == value)
         return query
 
     def apply_searching(
-        self, query: Query, search_fields: List[str], search_term: str
-    ) -> Query:
+        self, query: Select, search_fields: List[str], search_term: str
+    ) -> Select:
         """Apply searching to query based on search fields and term."""
         if search_term:
             search_term = f"%{search_term}%"
@@ -50,10 +64,10 @@ class BaseRepository(Generic[ModelType]):
                 if hasattr(self.model, field)
             ]
             if search_filters:
-                query = query.filter(or_(*search_filters))
+                query = query.where(or_(*search_filters))
         return query
 
-    def apply_sorting(self, query: Query, sort_by: str, order: str = "desc") -> Query:
+    def apply_sorting(self, query: Select, sort_by: str, order: str = "desc") -> Select:
         """Apply sorting to query."""
         if hasattr(self.model, sort_by):
             column = getattr(self.model, sort_by)
@@ -64,38 +78,43 @@ class BaseRepository(Generic[ModelType]):
         return query
 
     def create(self, **kwargs) -> ModelType:
-        """Create a new record."""
+        """
+        Create a new record.
+        Note: 'add' is sync, but we don't return the ID until 'flush' or 'commit'
+        is called in the service layer.
+        """
         instance = self.model(**kwargs)
         self.db.add(instance)
         return instance
 
-    def update(self, instance: ModelType, data: dict) -> ModelType:
+    async def update(self, instance: ModelType, data: dict) -> ModelType:
         """Update an existing record."""
         for field, value in data.items():
             if hasattr(instance, field):
                 setattr(instance, field, value)
-        self.db.flush()
+        await self.db.flush()
         return instance
 
-    def delete(self, instance: ModelType) -> None:
+    async def delete(self, instance: ModelType) -> None:
         """Hard delete a record."""
-        self.db.delete(instance)
-        self.db.flush()
+        await self.db.delete(instance)
+        await self.db.flush()
 
-    def soft_delete(self, instance: ModelType) -> None:
+    async def soft_delete(self, instance: ModelType) -> None:
         """Soft delete a record (if model has deleted_at)."""
         if hasattr(instance, "deleted_at"):
             instance.deleted_at = func.now()
-            self.db.flush()
+            await self.db.flush()
         else:
             raise AttributeError(f"{self.model.__name__} does not support soft delete")
 
-    def count(self) -> int:
+    async def count(self) -> int:
         """Count total records."""
-        return self.db.query(func.count(self.model.id)).scalar()
+        query = select(func.count()).select_from(self.model)
+        return await self.db.scalar(query) or 0
 
-    def exists(self, id: int) -> bool:
+    async def exists(self, id: int) -> bool:
         """Check if record exists."""
-        return self.db.query(
-            self.db.query(self.model).filter(self.model.id == id).exists()
-        ).scalar()
+        query = select(self.model.id).where(self.model.id == id)
+        result = await self.db.execute(query)
+        return result.scalars().first() is not None

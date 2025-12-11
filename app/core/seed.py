@@ -1,27 +1,27 @@
 import argparse
 import random
-from datetime import datetime, timedelta, date
+from datetime import date, datetime, timedelta
 from typing import Optional
 
 from sqlalchemy import insert, text
 
 from app.core.db import SessionLocal
-from app.models.user import User
-from app.models.project import Project
-from app.models.project_member import ProjectMember
-from app.models.sprint import Sprint
-from app.models.task import Task
-from app.models.project_history import ProjectHistory
-from app.models.sprint_history import SprintHistory
-from app.models.task_history import TaskHistory
 from app.core.enums import (
-    TaskStatus,
-    TaskPriority,
+    HistoryAction,
     ProjectStatus,
     SprintStatus,
+    TaskPriority,
+    TaskStatus,
     UserRole,
-    HistoryAction,
 )
+from app.models.project import Project
+from app.models.project_history import ProjectHistory
+from app.models.project_member import ProjectMember
+from app.models.sprint import Sprint
+from app.models.sprint_history import SprintHistory
+from app.models.task import Task
+from app.models.task_history import TaskHistory
+from app.models.user import User
 
 try:
     from faker import Faker

@@ -1,8 +1,8 @@
 from sqlalchemy import (
     Column,
+    ForeignKey,
     Integer,
     String,
-    ForeignKey,
     UniqueConstraint,
 )
 from sqlalchemy.orm import relationship

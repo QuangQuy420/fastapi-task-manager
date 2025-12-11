@@ -1,14 +1,12 @@
-import app.models
-from fastapi import FastAPI
-from app.api.routes import tasks, auth, projects, sprints
-
 import time
 from contextvars import ContextVar
-from fastapi import Request
+
+from fastapi import FastAPI, Request
 from sqlalchemy import event
 from sqlalchemy.engine import Engine
-# Import your 'engine' variable here from your database setup file
 
+import app.models
+from app.api.routes import auth, projects, sprints, tasks
 
 app = FastAPI(title="Task Manager API")
 app.include_router(tasks.router)

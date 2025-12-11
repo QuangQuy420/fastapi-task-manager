@@ -1,10 +1,10 @@
 from sqlalchemy import (
     JSON,
     Column,
-    Integer,
-    String,
     DateTime,
     ForeignKey,
+    Integer,
+    String,
     func,
 )
 from sqlalchemy.orm import relationship
