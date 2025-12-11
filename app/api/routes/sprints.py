@@ -77,7 +77,9 @@ async def list_sprint_tasks(
         default=None, description="Search in title/description"
     ),
     sort_by: str = Query(default="created_at", description="Sort by field"),
-    order: str = Query(default="desc", regex="^(asc|desc)$", description="Sort order"),
+    order: str = Query(
+        default="desc", pattern="^(asc|desc)$", description="Sort order"
+    ),
     current_user: User = Depends(get_current_user),
     task_service: TaskService = Depends(),
 ):

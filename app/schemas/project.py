@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import List
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from app.core.enums import ProjectStatus
 from app.schemas.sprint import SprintRead
@@ -28,15 +28,13 @@ class ProjectRead(ProjectBase):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ProjectDetailRead(ProjectRead):
     sprints: List[SprintRead] = []
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # ---- ProjectMember ----
@@ -54,5 +52,4 @@ class ProjectMemberRead(ProjectMemberBase):
     id: int
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)

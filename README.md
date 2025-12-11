@@ -1,47 +1,38 @@
-## Generate database
-```bash
-alembic init migrations
-alembic revision --autogenerate -m "initial tables"
-alembic upgrade head
-```
+# Task Management by FastAPI
 
-## Start app
-```bash
-uvicorn app.main:app --reload
-```
-
-## Seed data
-```bash
-python -m app.core.seed --truncate
-```
+FastAPI.
 
 ---
 
-## Format code
+## 1. How to Start the Application with Docker (Recommended for WSL or Linux environments)
+
+### 1.1. Clone the project
 ```bash
-ruff check . --fix
-ruff format .
+git clone git@github.com:QuangQuy420/fastapi-task-manager.git
+cd fastapi-task-manager
 ```
+
+### 1.2. Configure .env
+```bash
+cp .env.example .env
+```
+
+### 1.3. Build and Start
+```bash
+docker compose up -d --build
+```
+
+### 1.4. Run Migrations manually
+```bash
+docker compose exec api alembic upgrade head
+```
+
+### 1.5. Run seed data manually (Optional)
+```bash
+docker compose exec api python -m app.core.seed
+```
+
+### You can now access your API at http://localhost:8000/docs to check the document from Swagger.
 
 ---
 
-# List with pagination only
-GET /projects?page=1&page_size=20
-
-# Filter by status
-GET /projects?status=active&page=1
-
-# Search in title/description
-GET /projects?search=backend&page=1
-
-# Sort by title ascending
-GET /projects?sort_by=title&order=asc
-
-# Combine all
-GET /projects?status=active&search=api&sort_by=updated_at&order=desc&page=2&page_size=10
-
-# Single resource endpoints (NO pagination)
-POST /projects          # Returns single project
-GET /projects/123       # Returns single project
-PATCH /projects/123     # Returns single updated project
-DELETE /projects/123 

@@ -36,8 +36,6 @@ versions/
 # Environment & secrets
 # -----------------------------
 .env
-.env.*
-!.env.example   # keep template
 
 # -----------------------------
 # Editors & IDEs

@@ -143,6 +143,7 @@ class TaskService(BaseService[TaskRepository]):
             await self._validate_assigned_sprint(project_id, data.sprint_id)
 
         task_data = data.model_dump()
+        task_data["project_id"] = project_id
 
         task = self.repository.create(**task_data)
 

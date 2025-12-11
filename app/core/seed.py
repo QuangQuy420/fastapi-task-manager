@@ -210,11 +210,11 @@ def _make_task_history(task_id: int, user_ids: list[int]) -> dict:
 
 
 def seed_all(
-    num_users: int = 1000,
-    num_projects: int = 500,
-    sprints_per_project: int = 50,
-    tasks_per_project: int = 1000,
-    members_per_project: int = 100,
+    num_users: int = 90,
+    num_projects: int = 50,
+    sprints_per_project: int = 10,
+    tasks_per_project: int = 100,
+    members_per_project: int = 15,
     histories_per_entity: int = random.randint(3, 8),
     truncate: bool = False,
 ):
@@ -407,19 +407,19 @@ def seed_all(
 def main():
     parser = argparse.ArgumentParser(description="Seed the database with fake data.")
     parser.add_argument(
-        "--users", type=int, default=900, help="Number of users to create"
+        "--users", type=int, default=90, help="Number of users to create"
     )
     parser.add_argument(
-        "--projects", type=int, default=500, help="Number of projects to create"
+        "--projects", type=int, default=50, help="Number of projects to create"
     )
     parser.add_argument(
-        "--sprints-per-project", type=int, default=50, help="Sprints per project"
+        "--sprints-per-project", type=int, default=10, help="Sprints per project"
     )
     parser.add_argument(
-        "--tasks-per-project", type=int, default=1000, help="Tasks per project"
+        "--tasks-per-project", type=int, default=100, help="Tasks per project"
     )
     parser.add_argument(
-        "--members-per-project", type=int, default=100, help="Members per project"
+        "--members-per-project", type=int, default=15, help="Members per project"
     )
     parser.add_argument(
         "--histories", type=int, default=5, help="History records per entity"
