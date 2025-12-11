@@ -1,5 +1,8 @@
-from typing import List, Tuple, Optional
-from sqlalchemy.orm import Session, joinedload
+from typing import List, Optional, Tuple
+
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import joinedload
 
 from app.core.enums import ProjectStatus
 from app.models.project import Project
@@ -8,10 +11,10 @@ from app.repositories.base_repository import BaseRepository
 
 
 class ProjectRepository(BaseRepository[Project]):
-    def __init__(self, db: Session):
+    def __init__(self, db: AsyncSession):
         super().__init__(Project, db)
 
-    def get_user_projects(
+    async def get_user_projects(
         self,
         user_id: int,
         page: int = 1,
@@ -22,17 +25,16 @@ class ProjectRepository(BaseRepository[Project]):
         order: str = "asc",
     ) -> Tuple[List[Project], int]:
         """Get paginated, filtered, and sorted projects for a user."""
+
         query = (
-            self.db.query(Project)
+            select(Project)
             .join(ProjectMember, ProjectMember.project_id == Project.id)
-            .filter(ProjectMember.user_id == user_id, Project.deleted_at.is_(None))
+            .where(ProjectMember.user_id == user_id, Project.deleted_at.is_(None))
         )
 
-        # Apply filters
         if status:
             query = self.apply_filtering(query, {"status": status})
 
-        # Apply searching
         if search:
             query = self.apply_searching(
                 query,
@@ -40,19 +42,20 @@ class ProjectRepository(BaseRepository[Project]):
                 search_term=search,
             )
 
-        # Apply sorting
         query = self.apply_sorting(query, sort_by, order)
 
-        return self.get_paginated(query, page, page_size)
+        return await self.get_paginated(query, page, page_size)
 
-    def get_project_detail(self, project_id: int) -> Project:
-        return (
-            self.db.query(Project)
-            .options(joinedload(Project.sprints))
-            .filter(Project.id == project_id, Project.deleted_at.is_(None))
-            .first()
+    async def get_project_detail(self, project_id: int) -> Project | None:
+        query = (
+            select(Project)
+            .options(joinedload(Project.sprints))  # Eager load sprints
+            .where(Project.id == project_id, Project.deleted_at.is_(None))
         )
+        result = await self.db.execute(query)
+        return result.unique().scalars().first()
 
-    def delete_project(self, project: Project) -> None:
-        self.soft_delete(project)
+    async def delete_project(self, project: Project) -> None:
+        await self.soft_delete(project)
         project.status = ProjectStatus.ARCHIVED.value
+        await self.db.flush()

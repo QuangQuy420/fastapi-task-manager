@@ -1,34 +1,34 @@
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from fastapi.security import OAuth2PasswordRequestForm
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_db
-from app.schemas.user import UserCreate, UserRead
 from app.schemas.auth import Token
+from app.schemas.user import UserCreate, UserRead
 from app.services.user_service import UserService
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 
-def get_user_service(db: Session = Depends(get_db)) -> UserService:
+def get_user_service(db: AsyncSession = Depends(get_db)) -> UserService:
     return UserService(db)
 
 
 @router.post("/register", response_model=UserRead)
-def register(
+async def register(
     data: UserCreate,
     user_service: UserService = Depends(get_user_service),
 ):
-    return user_service.register(data)
+    return await user_service.register(data)
 
 
 @router.post("/login", response_model=Token)
-def login(
+async def login(
     response: Response,
     form_data: OAuth2PasswordRequestForm = Depends(),
     user_service: UserService = Depends(get_user_service),
 ):
-    access_token, refresh_token = user_service.authenticate_and_create_tokens(
+    access_token, refresh_token = await user_service.authenticate_and_create_tokens(
         email=form_data.username,
         password=form_data.password,
     )
@@ -39,7 +39,7 @@ def login(
         httponly=True,
         secure=False,
         samesite="lax",
-        max_age=60 * 60 * 24 * 7,  # 7 days
+        max_age=60 * 60 * 24 * 7,
         path="/",
     )
 
@@ -47,7 +47,7 @@ def login(
 
 
 @router.post("/refresh", response_model=Token)
-def refresh(
+async def refresh(
     request: Request,
     response: Response,
     user_service: UserService = Depends(get_user_service),
@@ -59,7 +59,7 @@ def refresh(
             detail="Missing refresh token",
         )
 
-    new_access, new_refresh = user_service.refresh_tokens(refresh_token)
+    new_access, new_refresh = await user_service.refresh_tokens(refresh_token)
 
     response.set_cookie(
         key="refresh_token",
@@ -75,10 +75,7 @@ def refresh(
 
 
 @router.post("/logout")
-def logout(response: Response):
-    """
-    Log out the user by clearing the refresh token cookie.
-    """
+async def logout(response: Response):
     response.delete_cookie(
         key="refresh_token",
         path="/",
@@ -86,5 +83,4 @@ def logout(response: Response):
         secure=False,
         httponly=True,
     )
-
     return {"detail": "Logged out successfully"}

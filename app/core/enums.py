@@ -4,6 +4,7 @@ from enum import Enum
 # Entity Types
 class EntityEnum(str, Enum):
     Entity = "Entity"
+    USER = "User"
     TASK = "Task"
     PROJECT = "Project"
     SPRINT = "Sprint"

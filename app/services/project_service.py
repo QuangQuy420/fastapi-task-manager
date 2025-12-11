@@ -1,7 +1,7 @@
 from typing import Optional
 
 from fastapi import Depends, HTTPException, status
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_db
 from app.core.enums import EntityEnum, HistoryAction, UserRole
@@ -15,13 +15,13 @@ from app.services.base_service import BaseService
 
 
 class ProjectService(BaseService[ProjectRepository]):
-    def __init__(self, db: Session = Depends(get_db)):
+    def __init__(self, db: AsyncSession = Depends(get_db)):
         project_repo = ProjectRepository(db)
         super().__init__(db, project_repo)
         self.member_repo = ProjectMemberRepository(db)
         self.project_history_repo = ProjectHistoryRepository(db)
 
-    def get_user_projects(
+    async def get_user_projects(
         self,
         user_id: int,
         page: int = 1,
@@ -32,7 +32,8 @@ class ProjectService(BaseService[ProjectRepository]):
         order: str = "asc",
     ) -> PaginatedResponse:
         """Get paginated, filtered, and sorted projects."""
-        items, total = self.repository.get_user_projects(
+
+        items, total = await self.repository.get_user_projects(
             user_id=user_id,
             page=page,
             page_size=page_size,
@@ -52,14 +53,15 @@ class ProjectService(BaseService[ProjectRepository]):
             total_pages=total_pages,
         )
 
-    def get_project_detail(self, project_id: int, user_id: int):
-        member = self.member_repo.get_member_project(project_id, user_id)
+    async def get_project_detail(self, project_id: int, user_id: int):
+        member = await self.member_repo.get_member_project(project_id, user_id)
         if not member:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="You are not a member of this project",
             )
-        detail_project = self.repository.get_project_detail(project_id)
+
+        detail_project = await self.repository.get_project_detail(project_id)
         if not detail_project:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -67,13 +69,14 @@ class ProjectService(BaseService[ProjectRepository]):
             )
         return detail_project
 
-    def create_project(self, data: ProjectCreate, owner_id: int):
+    async def create_project(self, data: ProjectCreate, owner_id: int):
         project = self.repository.create(
             title=data.title,
             description=data.description,
             managed_by=owner_id,
         )
-        self.db.flush()
+
+        await self.db.flush()
 
         self.member_repo.add_member(
             project_id=project.id,
@@ -88,15 +91,15 @@ class ProjectService(BaseService[ProjectRepository]):
             details=None,
         )
 
-        self.commit_or_rollback()
-        return self.refresh(project)
+        await self.commit_or_rollback()
+        return await self.refresh(project)
 
-    def update_project(self, project_id: int, data: ProjectUpdate, user_id: int):
-        self.member_repo.check_permissions(
+    async def update_project(self, project_id: int, data: ProjectUpdate, user_id: int):
+        await self.member_repo.check_permissions(
             project_id, user_id, [UserRole.OWNER.value, UserRole.MAINTAINER.value]
         )
 
-        project = self.get_by_id_or_404(
+        project = await self.get_by_id_or_404(
             entity_id=project_id, for_update=True, entity_name=EntityEnum.PROJECT.value
         )
 
@@ -107,7 +110,7 @@ class ProjectService(BaseService[ProjectRepository]):
             "status": project.status,
         }
 
-        project = self.repository.update(project, update_data)
+        project = await self.repository.update(project, update_data)
 
         after = {
             "title": project.title,
@@ -122,13 +125,15 @@ class ProjectService(BaseService[ProjectRepository]):
             details={"before": before, "after": after},
         )
 
-        self.commit_or_rollback()
-        return self.refresh(project)
+        await self.commit_or_rollback()
+        return await self.refresh(project)
 
-    def delete_project(self, project_id: int, user_id: int):
-        self.member_repo.check_permissions(project_id, user_id, [UserRole.OWNER.value])
+    async def delete_project(self, project_id: int, user_id: int):
+        await self.member_repo.check_permissions(
+            project_id, user_id, [UserRole.OWNER.value]
+        )
 
-        project = self.get_by_id_or_404(
+        project = await self.get_by_id_or_404(
             entity_id=project_id, for_update=True, entity_name=EntityEnum.PROJECT.value
         )
 
@@ -139,5 +144,6 @@ class ProjectService(BaseService[ProjectRepository]):
             details=None,
         )
 
-        self.repository.delete_project(project)
-        self.commit_or_rollback()
+        # AWAIT HERE
+        await self.repository.delete_project(project)
+        await self.commit_or_rollback()

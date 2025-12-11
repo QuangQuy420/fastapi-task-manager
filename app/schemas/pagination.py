@@ -1,4 +1,5 @@
-from typing import Generic, Optional, TypeVar, List
+from typing import Generic, List, Optional, TypeVar
+
 from pydantic import BaseModel, Field
 
 from app.core.enums import ProjectSortBy, SortOrder

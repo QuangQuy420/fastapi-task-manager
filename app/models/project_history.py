@@ -1,14 +1,14 @@
 from sqlalchemy import (
     Column,
-    Integer,
-    String,
     DateTime,
     ForeignKey,
+    Integer,
+    String,
     func,
 )
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import relationship
 
-from sqlalchemy.dialects.postgresql import JSONB
 from app.core.db import Base
 
 

@@ -1,4 +1,5 @@
 from datetime import date, datetime
+
 from pydantic import BaseModel, Field
 
 from app.core.enums import SprintStatus

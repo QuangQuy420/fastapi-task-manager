@@ -1,9 +1,9 @@
 from sqlalchemy import (
     Column,
-    Integer,
-    String,
     DateTime,
     ForeignKey,
+    Integer,
+    String,
     func,
 )
 from sqlalchemy.orm import relationship

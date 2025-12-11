@@ -1,6 +1,8 @@
 from datetime import datetime
+
 from pydantic import BaseModel, Field
-from app.core.enums import TaskStatus, TaskPriority
+
+from app.core.enums import TaskPriority, TaskStatus
 
 
 class TaskBase(BaseModel):
