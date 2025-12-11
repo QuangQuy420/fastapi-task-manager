@@ -1,6 +1,6 @@
 # Task Management by FastAPI
 
-FastAPI.
+Building REST APIs with FastAPI
 
 ---
 
@@ -24,6 +24,8 @@ docker compose up -d --build
 
 ### 1.4. Run Migrations manually
 ```bash
+docker compose exec api mkdir migrations/versions
+docker compose exec api alembic revision --autogenerate -m "init_db"
 docker compose exec api alembic upgrade head
 ```
 
@@ -33,6 +35,11 @@ docker compose exec api python -m app.core.seed
 ```
 
 ### You can now access your API at http://localhost:8000/docs to check the document from Swagger.
+
+### 1.5. Stop Application
+```bash
+docker compose down
+```
 
 ---
 
