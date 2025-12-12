@@ -15,7 +15,7 @@ def test_get_sprint_detail_success(client, mock_sprint_service):
         "updated_at": "2025-12-11T00:00:00",
     }
 
-    response = client.get("/sprints/1")
+    response = client.get("/api/sprints/1")
 
     assert response.status_code == 200
     data = response.json()
@@ -30,7 +30,7 @@ def test_get_sprint_not_found(client, mock_sprint_service):
         status_code=404, detail="Sprint not found"
     )
 
-    response = client.get("/sprints/999")
+    response = client.get("/api/sprints/999")
 
     assert response.status_code == 404
 
@@ -41,7 +41,7 @@ def test_get_sprint_forbidden(client, mock_sprint_service):
         status_code=403, detail="You are not a member of this project"
     )
 
-    response = client.get("/sprints/1")
+    response = client.get("/api/sprints/1")
 
     assert response.status_code == 403
 
@@ -65,7 +65,7 @@ def test_update_sprint_success(client, mock_sprint_service):
         "status": "completed",
     }
 
-    response = client.patch("/sprints/1", json=payload)
+    response = client.patch("/api/sprints/1", json=payload)
 
     assert response.status_code == 200
     data = response.json()
@@ -81,7 +81,7 @@ def test_update_sprint_not_found(client, mock_sprint_service):
 
     payload = {"title": "Updated Sprint"}
 
-    response = client.patch("/sprints/999", json=payload)
+    response = client.patch("/api/sprints/999", json=payload)
 
     assert response.status_code == 404
 
@@ -94,7 +94,7 @@ def test_update_sprint_forbidden(client, mock_sprint_service):
 
     payload = {"title": "Updated Sprint"}
 
-    response = client.patch("/sprints/1", json=payload)
+    response = client.patch("/api/sprints/1", json=payload)
 
     assert response.status_code == 403
 
@@ -103,7 +103,7 @@ def test_delete_sprint_success(client, mock_sprint_service):
     """Test deleting a sprint."""
     mock_sprint_service.delete_sprint.return_value = None
 
-    response = client.delete("/sprints/1")
+    response = client.delete("/api/sprints/1")
 
     assert response.status_code == 204
     mock_sprint_service.delete_sprint.assert_awaited_once_with(sprint_id=1, user_id=1)
@@ -115,7 +115,7 @@ def test_delete_sprint_not_found(client, mock_sprint_service):
         status_code=404, detail="Sprint not found"
     )
 
-    response = client.delete("/sprints/999")
+    response = client.delete("/api/sprints/999")
 
     assert response.status_code == 404
 
@@ -126,7 +126,7 @@ def test_delete_sprint_forbidden(client, mock_sprint_service):
         status_code=403, detail="You don't have permission to delete this sprint"
     )
 
-    response = client.delete("/sprints/1")
+    response = client.delete("/api/sprints/1")
 
     assert response.status_code == 403
 
@@ -156,7 +156,7 @@ def test_list_sprint_tasks_success(client, mock_task_service):
         "total_pages": 1,
     }
 
-    response = client.get("/sprints/1/tasks")
+    response = client.get("/api/sprints/1/tasks")
 
     assert response.status_code == 200
     data = response.json()
@@ -175,7 +175,7 @@ def test_list_sprint_tasks_with_filters(client, mock_task_service):
         "total_pages": 0,
     }
 
-    response = client.get("/sprints/1/tasks?status=done&priority=1")
+    response = client.get("/api/sprints/1/tasks?status=done&priority=1")
 
     assert response.status_code == 200
     mock_task_service.get_project_tasks.assert_awaited_once()
@@ -203,7 +203,7 @@ def test_list_sprint_tasks_with_search(client, mock_task_service):
         "total_pages": 1,
     }
 
-    response = client.get("/sprints/1/tasks?search=bug")
+    response = client.get("/api/sprints/1/tasks?search=bug")
 
     assert response.status_code == 200
     data = response.json()

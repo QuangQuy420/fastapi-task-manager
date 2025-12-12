@@ -17,7 +17,7 @@ def test_get_task_detail_success(client, mock_task_service):
         "updated_at": "2025-12-11T00:00:00",
     }
 
-    response = client.get("/tasks/1")
+    response = client.get("/api/tasks/1")
 
     assert response.status_code == 200
     data = response.json()
@@ -32,7 +32,7 @@ def test_get_task_not_found(client, mock_task_service):
         status_code=404, detail="Task not found"
     )
 
-    response = client.get("/tasks/999")
+    response = client.get("/api/tasks/999")
 
     assert response.status_code == 404
 
@@ -43,7 +43,7 @@ def test_get_task_forbidden(client, mock_task_service):
         status_code=403, detail="You are not a member of this project"
     )
 
-    response = client.get("/tasks/1")
+    response = client.get("/api/tasks/1")
 
     assert response.status_code == 403
 
@@ -71,7 +71,7 @@ def test_update_task_success(client, mock_task_service):
         "assigned_to": 2,
     }
 
-    response = client.patch("/tasks/1", json=payload)
+    response = client.patch("/api/tasks/1", json=payload)
 
     assert response.status_code == 200
     data = response.json()
@@ -97,7 +97,7 @@ def test_update_task_mark_as_done(client, mock_task_service):
 
     payload = {"status": "done"}
 
-    response = client.patch("/tasks/1", json=payload)
+    response = client.patch("/api/tasks/1", json=payload)
 
     assert response.status_code == 200
     data = response.json()
@@ -112,7 +112,7 @@ def test_update_task_not_found(client, mock_task_service):
 
     payload = {"title": "Updated Task"}
 
-    response = client.patch("/tasks/999", json=payload)
+    response = client.patch("/api/tasks/999", json=payload)
 
     assert response.status_code == 404
 
@@ -125,7 +125,7 @@ def test_update_task_forbidden(client, mock_task_service):
 
     payload = {"title": "Updated Task"}
 
-    response = client.patch("/tasks/1", json=payload)
+    response = client.patch("/api/tasks/1", json=payload)
 
     assert response.status_code == 403
 
@@ -138,7 +138,7 @@ def test_update_task_assign_non_member(client, mock_task_service):
 
     payload = {"assigned_to": 999}
 
-    response = client.patch("/tasks/1", json=payload)
+    response = client.patch("/api/tasks/1", json=payload)
 
     assert response.status_code == 400
     assert "not a project member" in response.json()["detail"].lower()
@@ -148,7 +148,7 @@ def test_delete_task_success(client, mock_task_service):
     """Test deleting a task."""
     mock_task_service.delete_task.return_value = None
 
-    response = client.delete("/tasks/1")
+    response = client.delete("/api/tasks/1")
 
     assert response.status_code == 204
     mock_task_service.delete_task.assert_awaited_once_with(task_id=1, user_id=1)
@@ -160,7 +160,7 @@ def test_delete_task_not_found(client, mock_task_service):
         status_code=404, detail="Task not found"
     )
 
-    response = client.delete("/tasks/999")
+    response = client.delete("/api/tasks/999")
 
     assert response.status_code == 404
 
@@ -171,6 +171,6 @@ def test_delete_task_forbidden(client, mock_task_service):
         status_code=403, detail="You don't have permission to delete this task"
     )
 
-    response = client.delete("/tasks/1")
+    response = client.delete("/api/tasks/1")
 
     assert response.status_code == 403

@@ -1,7 +1,7 @@
 import time
 from contextvars import ContextVar
 
-from fastapi import FastAPI, Request
+from fastapi import APIRouter, FastAPI, Request
 from sqlalchemy import event
 from sqlalchemy.engine import Engine
 
@@ -9,10 +9,15 @@ import app.models
 from app.api.routes import auth, projects, sprints, tasks
 
 app = FastAPI(title="Task Manager API")
-app.include_router(tasks.router)
-app.include_router(auth.router)
-app.include_router(projects.router)
-app.include_router(sprints.router)
+
+api_router = APIRouter(prefix="/api")
+
+api_router.include_router(tasks.router)
+api_router.include_router(auth.router)
+api_router.include_router(projects.router)
+api_router.include_router(sprints.router)
+
+app.include_router(api_router)
 
 
 # Measure DB query performance using SQLAlchemy events and FastAPI middleware - Test purpose

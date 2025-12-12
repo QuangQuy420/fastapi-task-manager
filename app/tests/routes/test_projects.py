@@ -19,7 +19,7 @@ def test_create_project_success(client, mock_project_service):
         "status": "planned",
     }
 
-    response = client.post("/projects", json=payload)
+    response = client.post("/api/projects", json=payload)
 
     assert response.status_code == 201
     data = response.json()
@@ -35,7 +35,7 @@ def test_create_project_missing_title(client):
         "description": "Description without title",
     }
 
-    response = client.post("/projects", json=payload)
+    response = client.post("/api/projects", json=payload)
 
     assert response.status_code == 422
 
@@ -69,7 +69,7 @@ def test_list_projects_success(client, mock_project_service):
         "total_pages": 1,
     }
 
-    response = client.get("/projects")
+    response = client.get("/api/projects")
 
     assert response.status_code == 200
     data = response.json()
@@ -89,7 +89,7 @@ def test_list_projects_with_pagination(client, mock_project_service):
         "total_pages": 3,
     }
 
-    response = client.get("/projects?page=2&page_size=10")
+    response = client.get("/api/projects?page=2&page_size=10")
 
     assert response.status_code == 200
     data = response.json()
@@ -117,7 +117,7 @@ def test_list_projects_filter_by_status(client, mock_project_service):
         "total_pages": 1,
     }
 
-    response = client.get("/projects?status=active")
+    response = client.get("/api/projects?status=active")
 
     assert response.status_code == 200
     data = response.json()
@@ -145,7 +145,7 @@ def test_list_projects_with_search(client, mock_project_service):
         "total_pages": 1,
     }
 
-    response = client.get("/projects?search=backend")
+    response = client.get("/api/projects?search=backend")
 
     assert response.status_code == 200
     data = response.json()
@@ -163,7 +163,7 @@ def test_list_projects_with_sorting(client, mock_project_service):
         "total_pages": 0,
     }
 
-    response = client.get("/projects?sort_by=title&order=desc")
+    response = client.get("/api/projects?sort_by=title&order=desc")
 
     assert response.status_code == 200
     mock_project_service.get_user_projects.assert_awaited_once()
@@ -193,7 +193,7 @@ def test_get_project_detail_success(client, mock_project_service):
         ],
     }
 
-    response = client.get("/projects/1")
+    response = client.get("/api/projects/1")
 
     assert response.status_code == 200
     data = response.json()
@@ -209,7 +209,7 @@ def test_get_project_not_found(client, mock_project_service):
         status_code=404, detail="Project not found"
     )
 
-    response = client.get("/projects/999")
+    response = client.get("/api/projects/999")
 
     assert response.status_code == 404
 
@@ -220,7 +220,7 @@ def test_get_project_forbidden(client, mock_project_service):
         status_code=403, detail="You are not a member of this project"
     )
 
-    response = client.get("/projects/1")
+    response = client.get("/api/projects/1")
 
     assert response.status_code == 403
 
@@ -242,7 +242,7 @@ def test_update_project_success(client, mock_project_service):
         "description": "Updated Description",
     }
 
-    response = client.patch("/projects/1", json=payload)
+    response = client.patch("/api/projects/1", json=payload)
 
     assert response.status_code == 200
     data = response.json()
@@ -258,7 +258,7 @@ def test_update_project_not_found(client, mock_project_service):
 
     payload = {"title": "Updated Title"}
 
-    response = client.patch("/projects/999", json=payload)
+    response = client.patch("/api/projects/999", json=payload)
 
     assert response.status_code == 404
 
@@ -271,7 +271,7 @@ def test_update_project_forbidden(client, mock_project_service):
 
     payload = {"title": "Updated Title"}
 
-    response = client.patch("/projects/1", json=payload)
+    response = client.patch("/api/projects/1", json=payload)
 
     assert response.status_code == 403
 
@@ -280,7 +280,7 @@ def test_delete_project_success(client, mock_project_service):
     """Test deleting a project."""
     mock_project_service.delete_project.return_value = None
 
-    response = client.delete("/projects/1")
+    response = client.delete("/api/projects/1")
 
     assert response.status_code == 204
     mock_project_service.delete_project.assert_awaited_once_with(
@@ -294,7 +294,7 @@ def test_delete_project_not_found(client, mock_project_service):
         status_code=404, detail="Project not found"
     )
 
-    response = client.delete("/projects/999")
+    response = client.delete("/api/projects/999")
 
     assert response.status_code == 404
 
@@ -305,7 +305,7 @@ def test_delete_project_forbidden(client, mock_project_service):
         status_code=403, detail="Only project owner can delete"
     )
 
-    response = client.delete("/projects/1")
+    response = client.delete("/api/projects/1")
 
     assert response.status_code == 403
 
@@ -332,7 +332,7 @@ def test_list_project_sprints_success(client, mock_sprint_service):
         "total_pages": 1,
     }
 
-    response = client.get("/projects/1/sprints")
+    response = client.get("/api/projects/1/sprints")
 
     assert response.status_code == 200
     data = response.json()
@@ -361,7 +361,7 @@ def test_create_sprint_in_project_success(client, mock_sprint_service):
         "end_date": "2025-12-14",
     }
 
-    response = client.post("/projects/1/sprints", json=payload)
+    response = client.post("/api/projects/1/sprints", json=payload)
 
     assert response.status_code == 201
     data = response.json()
@@ -393,7 +393,7 @@ def test_list_project_tasks_success(client, mock_task_service):
         "total_pages": 1,
     }
 
-    response = client.get("/projects/1/tasks")
+    response = client.get("/api/projects/1/tasks")
 
     assert response.status_code == 200
     data = response.json()
@@ -427,7 +427,7 @@ def test_create_task_in_project_success(client, mock_task_service):
         "parent_id": None,
     }
 
-    response = client.post("/projects/1/tasks", json=payload)
+    response = client.post("/api/projects/1/tasks", json=payload)
 
     data = response.json()
     assert data["title"] == "New Task"
