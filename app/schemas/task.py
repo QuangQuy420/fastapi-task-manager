@@ -15,7 +15,6 @@ class TaskBase(BaseModel):
 
 
 class TaskCreate(TaskBase):
-    # project_id: int
     sprint_id: int | None = None
     parent_id: int | None = None
 
